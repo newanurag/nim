@@ -1,6 +1,6 @@
 NIM_OUTDIR  = objects_compiled
-NIM_BINDIR  = /home/averma/lab/nim/bin/
-NIM_SRCDIR  = /home/averma/lab/nim/src/
+NIM_BINDIR  = /home/averma/nim/bin/
+NIM_SRCDIR  = /home/averma/nim/src/
 BTREE_SRCDIR = $(NIM_SRCDIR)BTree/
  
 NIM_FLAGS = --threads:on --checks:on --outdir:$(NIM_BINDIR)
@@ -71,3 +71,10 @@ loc:
 
 loc2:
 	wc BTreeHeader.nim BTreeCreate.nim BTreeDelete.nim BTreeSearch.nim BTreeTraversal.nim
+ls:
+	ls -l $(NIM_BINDIR)/BTree*
+
+clean:
+	rm -rf $(NIM_BINDIR)/BTree*
+
+ca: clean all

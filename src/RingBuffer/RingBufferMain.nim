@@ -2,8 +2,9 @@
 # Ring Buffer Implementation
 ######################################################################
 
-import ringbuffer_module
 import std/[asyncnet, asyncdispatch]
+import RingBufferHeader
+import RingBufferCore
 
 proc setData(obj: ref RingBuffer, data: string): void =
 #{

@@ -1,0 +1,536 @@
+import std/math
+#import std/os
+import strutils
+import CommonImports
+import CommonLogger
+import BTreeHeader
+import BTreeUtils
+
+proc getBTreeNodeStr*(arg_node: ref BTreeNode): string
+proc getBTreeNodeOnlyStr*(arg_node: ref BTreeNode): string
+
+proc getid*(): string =
+#{
+   var idstr: string = BT_PREFIX
+   var ids = BT_SUFFIX
+   idstr.add("[")
+   idstr.add(intToStr(ids))
+   idstr.add("]")
+   BT_SUFFIX = BT_SUFFIX + 1
+   return idstr
+#}
+
+proc printList*(head: ref ListNode): void =
+#{
+   stdout.write("BTreeNode KeyList :[ ")
+   var node = head
+   while (node != nil):
+     stdout.write(node.key," ")
+     node = node.next
+   stdout.write("]\n")
+#}
+
+proc printListAddress*(head: ref ListNode): void =
+#{
+   log("BTreeNode KeyList :\n[ ")
+   var node = head
+   while (node != nil):
+     log("%18d ", node.key)
+     node = node.next
+   log("]\n")
+
+   node = head
+   log("[ ")
+   while (node != nil):
+     var str = getAddressHex(node)
+     log("%4s ", str)
+     node = node.next
+   log("]\n")
+
+   # To print next address
+   node = head
+   log("[ ")
+   while (node != nil):
+     var str = getAddressHex(node.next)
+     log("%4s ", str)
+     node = node.next
+   log("]\n")
+
+   # To print prev address
+   node = head
+   log("[ ")
+   while (node != nil):
+     var str = getAddressHex(node.prev)
+     log("%4s ", str)
+     node = node.next
+   log("]\n")
+#}
+
+proc printListAddressF*(head: ref ListNode): void =
+#{
+   logf("BTreeNode KeyList :\n[ ")
+   var node = head
+   while (node != nil):
+     logf("%18d ", node.key)
+     node = node.next
+   logf("]\n")
+
+   node = head
+   logf("[ ")
+   while (node != nil):
+     var str = getAddressHex(node)
+     logf("%4s ", str)
+     node = node.next
+   logf("]\n")
+
+   # To print next address
+   node = head
+   logf("[ ")
+   while (node != nil):
+     var str = getAddressHex(node.next)
+     logf("%4s ", str)
+     node = node.next
+   logf("]\n")
+
+   # To print prev address
+   node = head
+   logf("[ ")
+   while (node != nil):
+     var str = getAddressHex(node.prev)
+     logf("%4s ", str)
+     node = node.next
+   logf("]\n")
+#}
+
+proc printList*(root: ref BTreeNode): void =
+#{
+   var node = root.bt_listhead
+   #stdout.write("BTreeNode[" & $root.bt_kstart & "] KeyList :[ ")
+   log("BTreeNode[%d] KeyList  :[ ", node.key)
+   while (node != nil):
+     stdout.write(node.key," ")
+     node = node.next
+   stdout.write("]\n")
+#}
+
+proc printInput*(datalist: seq[int]): void=
+#{
+   var str:string
+   for idx, i in datalist: #{
+     if (idx == low(datalist)):
+       str.add("Input   string  :[ ")
+     str.add("" & $i)
+     str.add(" ")
+
+     if (idx == high(datalist)):
+       str.add("]")
+   #}
+   str.add(" Input   Count : " & $len(datalist))
+   log(str)
+   logf(str)
+#}
+
+proc getInputStr*(datalist: seq[int]): string =
+#{
+   var str:string
+   for idx, i in datalist: #{
+     if (idx == low(datalist)):
+       str.add("[ ")
+     str.add("" & $i)
+     str.add(" ")
+
+     if (idx == high(datalist)):
+       str.add("]")
+   #}
+   str.add(" Input count   : " & $len(datalist))
+   return str
+#}
+
+proc printInputF*(datalist: seq[int]): void=
+#{
+   var str:string
+   for idx, i in datalist: #{
+     if (idx == low(datalist)):
+       str.add("Input   string  :[ ")
+     str.add("" & $i)
+     str.add(" ")
+
+     if (idx == high(datalist)):
+       str.add("]")
+   #}
+   logf(str)
+#}
+
+proc printListNode*(head: ref ListNode): void =
+#{
+   var key = head.key
+   var keyaddr = getAddress(head)
+   echo "Key = ",key," Address = ",keyaddr
+#}
+
+proc printListNode*(node: ref ListNode, idx: int, tot: int): void =
+#{
+   var key = node.key
+   var keyaddr = getAddress(node)
+   log("[<--------- ListNode  Begin[%d/%d] ---------->\n", idx, tot)
+   log("    ListNode                      = %s\n", getAddressHex(node) )
+   log("    ListNode.key                  = %d\n", key)
+   log("    ListNode.ParentListNode       = %s\n", getAddressHex(getParentListNode(node)))
+   if (node.parentListNode != nil):
+     log("    ListNode.ParentListNodeKey    = %d\n", getParentListNode(node).key)
+   else:
+     log("    ListNode.ParentListNodeKey    = NULL\n")
+
+   log("    ListNode.ParentBTreeNode      = %s\n", getAddressHex(getParent(node)))
+   if (getParent(node) != nil):
+     log("    ListNode.ParentBTreeNode      = %s\n", getBTreeNodeOnlyStr(getParent(node)))
+   else:
+     log("    ListNode.ParentBTreeNode      = NULL\n")
+
+   if (node.next == nil):
+     log("    ListNode.next                 = %s\n", getAddressHex(node.next))
+   else:
+     log("    ListNode.next                 = %s next.key = %d\n",
+         getAddressHex(node.next), node.next.key)
+
+   if (node.prev == nil):
+     log("    ListNode.prev                 = %s\n", getAddressHex(node.prev))
+   else:
+     log("    ListNode.prev                 = %s prev.key = %d\n",
+         getAddressHex(node.prev), node.prev.key)
+
+
+   var leftBTreeNode  = getLeft(node)
+   var rightBTreeNode = getRight(node)
+   var str:string
+   if (leftBTreeNode != nil):
+     str.add("    ListNode.leftBTreeNode        = [ ")
+     var node = leftBTreeNode.bt_listhead
+     while (node != nil):
+       str.add("" & $node.key)
+       str.add(" ")
+       node = node.next
+     str.add("]\n")
+     log(str)
+
+   str = ""
+   if (rightBTreeNode != nil):
+     str.add("    ListNode.rightBTreeNode       = [ ")
+     var node = rightBTreeNode.bt_listhead
+     while (node != nil):
+       str.add("" & $node.key)
+       str.add(" ")
+       node = node.next
+     str.add("]\n")
+     log(str)
+
+   log("[<--------- ListNode    End[%d/%d] ---------->\n\n", idx, tot)
+#}
+
+proc printListNodeF*(node: ref ListNode, idx: int, tot: int): void =
+#{
+   var key = node.key
+   var keyaddr = getAddress(node)
+   logf("[<--------- ListNode  Begin[%d/%d] ---------->", idx, tot)
+   logf(" ListNode                      = %s", getAddressHex(node) )
+   logf(" ListNode.key                  = %d", key)
+   logf(" ListNode.ParentListNode       = %s", getAddressHex(getParentListNode(node)))
+
+   if (node.parentListNode != nil):
+     logf(" ListNode.ParentListNodeKey    = %d", getParentListNode(node).key)
+   else:
+     logf(" ListNode.ParentListNodeKey    = NULL")
+
+   logf(" ListNode.ParentBTreeNode      = %s", getAddressHex(getParent(node)))
+   if (getParent(node) != nil):
+     logf(" ListNode.ParentBTreeNode      = %s", getBTreeNodeOnlyStr(getParent(node)))
+   else:
+     logf(" ListNode.ParentBTreeNode      = NULL")
+
+   if (node.next == nil):
+     logf(" ListNode.next                 = %s", getAddressHex(node.next))
+   else:
+     logf(" ListNode.next                 = %s next.key = %d",
+         getAddressHex(node.next), node.next.key)
+
+   if (node.prev == nil):
+     logf(" ListNode.prev                 = %s", getAddressHex(node.prev))
+   else:
+     logf(" ListNode.prev                 = %s prev.key = %d",
+         getAddressHex(node.prev), node.prev.key)
+
+
+   var leftBTreeNode  = getLeft(node)
+   var rightBTreeNode = getRight(node)
+   var str:string
+   if (leftBTreeNode != nil):
+     str.add(" ListNode.leftBTreeNode        = [ ")
+     var node = leftBTreeNode.bt_listhead
+     while (node != nil):
+       str.add("" & $node.key)
+       str.add(" ")
+       node = node.next
+     str.add("]")
+     logf(str)
+
+   str = ""
+   if (rightBTreeNode != nil):
+     str.add(" ListNode.rightBTreeNode       = [ ")
+     var node = rightBTreeNode.bt_listhead
+     while (node != nil):
+       str.add("" & $node.key)
+       str.add(" ")
+       node = node.next
+     str.add("]")
+     logf(str)
+
+   logf("[<--------- ListNode    End[%d/%d] ---------->", idx, tot)
+#}
+
+proc printListNode*(head: ref ListNode, mark: string): void =
+#{
+   var key = head.key
+   var keyaddr = getAddress(head)
+   echo "[",mark,"]Key = ",key," Address = ",keyaddr.toHex
+#}
+
+proc printBTreeNode*(root: ref BTreeNode): void =
+#{
+   if (root == nil):
+     return
+   var middle = getMiddleNode(root)
+   echo "[<--------- BTreeNode Begin ---------->"
+   log(" BTreeNode                     = %s\n", getAddressHex(root) )
+   log(" BTreeNode.ID                  = %s\n",  root.bt_id)
+   if (root.bt_type == BT_ROOT): #{
+     log(" BTreeNode.type                = ROOT\n")
+   elif (root.bt_type == BT_NODE):
+     log(" BTreeNode.type                = INTERNAL_NODE\n")
+   else:
+     log(" BTreeNode.type                = LEAF\n")
+   #}
+   
+   log(" BTreeNode.degree              = %d\n", BT_DEGREE)
+   log(" BTreeNode.order               = %d\n", BT_DEGREE)
+   var minchld:float
+   minchld = cast[int](BT_DEGREE) / 2
+   log(" BTreeNode.head                = %d\n", root.bt_listhead.key)
+   log(" BTreeNode.head                = %s\n", getAddressHex(root.bt_listhead))
+   log(" BTreeNode.tail                = %d\n", root.bt_listtail.key)
+   log(" BTreeNode.tail                = %s\n", getAddressHex(root.bt_listtail))
+   log(" BTreeNode.cnum(No. of childs) = %d\n", root.bt_numchild)
+   log(" BTreeNode.maxchild            = %d\n", BT_MAXCHLD)
+   stdout.write(" BTreeNode.minchild            = " & $minchld & "\n")
+   log(" BTreeNode.knum(No. of keys)   = %d\n", root.bt_numkeys)
+   log(" BTreeNode.maxkeys             = %d\n", BT_MAXKEYS)
+   log(" BTreeNode.middleKey           = %d\n", middle.key)
+   log(" BTreeNode.middleNode          = %s\n", getAddressHex(middle))
+   log(" BTreeNode.parent              = %s\n", getAddressHex(root.bt_parent))
+   if (root.bt_parent != nil):
+     log(" BTreeNode.parent              = %s, KEY = %d\n",
+     root.bt_parent.bt_id, root.bt_parent.bt_listhead.key)
+   log(" BTreeNode.keyList             = [ ")
+   var node = root.bt_listhead
+   while (node != nil):
+     log("%d ",node.key)
+     node = node.next
+   stdout.write("]\n")
+   echo "]<--------- BTreeNode   End ---------->"
+#}
+
+proc printBTreeNodeF*(root: ref BTreeNode, idx: int, tot: int): void =
+#{
+   if (root == nil):
+     return
+   var middle = getMiddleNode(root)
+   logf("[<--------- BTreeNode Begin[%d/%d] ---------->", idx, tot)
+   logf(" BTreeNode                     = %s", getAddressHex(root) )
+   logf(" BTreeNode.ID                  = %s",  root.bt_id)
+   if (root.bt_type == BT_ROOT): #{
+     logf(" BTreeNode.type                = ROOT")
+   elif (root.bt_type == BT_NODE):
+     logf(" BTreeNode.type                = INTERNAL_NODE")
+   else:
+     logf(" BTreeNode.type                = LEAF")
+   #}
+   
+   logf(" BTreeNode.degree              = %d", BT_DEGREE)
+   logf(" BTreeNode.order               = %d", BT_DEGREE)
+   var minchld:float
+   minchld = cast[int](BT_DEGREE) / 2
+   logf(" BTreeNode.head                = %d", root.bt_listhead.key)
+   logf(" BTreeNode.head                = %s", getAddressHex(root.bt_listhead))
+   logf(" BTreeNode.tail                = %d", root.bt_listtail.key)
+   logf(" BTreeNode.tail                = %s", getAddressHex(root.bt_listtail))
+   logf(" BTreeNode.cnum(No. of childs) = %d", root.bt_numchild)
+   logf(" BTreeNode.maxchild            = %d", BT_MAXCHLD)
+   #stdout.write(" BTreeNode.minchild          = " & $minchld & "\n")
+   logf(" BTreeNode.minchild            = %f", minchld)
+   logf(" BTreeNode.knum(No. of keys)   = %d", root.bt_numkeys)
+   logf(" BTreeNode.maxkeys             = %d", BT_MAXKEYS)
+   logf(" BTreeNode.middleKey           = %d", middle.key)
+   logf(" BTreeNode.middleNode          = %s", getAddressHex(middle))
+   logf(" BTreeNode.parent              = %s", getAddressHex(root.bt_parent))
+   var str:string
+   if (root.bt_parent != nil):
+     str.add(" BTreeNode.parentBTreeNode     = [ ")
+     var node = root.bt_parent.bt_listhead
+     while (node != nil):
+       str.add("" & $node.key)
+       str.add(" ")
+       node = node.next
+     str.add("]")
+     logf(str)
+
+   str = ""
+   str.add(" BTreeNode.keyList             = [ ")
+   var node = root.bt_listhead
+   while (node != nil):
+     str.add("" & $node.key)
+     str.add(" ")
+     node = node.next
+   str.add("]")
+   logf(str)
+   logf("]<--------- BTreeNode   End[%d/%d] ---------->", idx, tot)
+#}
+
+proc printBTreeArray*(): void =
+#{
+   for node in btarray:
+     printBTreeNode(node)
+   log("Total BTreeNodes  : %d\n", len(btarray))
+   logf("Total BTreeNodes  : %d\n", len(btarray))
+#}
+
+proc printBTreeArrayF*(): void =
+#{
+   for idx, node in btarray:
+     printBTreeNodeF(node, idx+1, len(btarray))
+   logf("Total BTreeNodes     : %d\n", len(btarray))
+#}
+
+proc printBTreeListF*(): void =
+#{
+   for idx, node in btlist:
+     printListNodeF(node, idx+1, len(btlist))
+   logf("Total ListNodes : %d\n", len(btlist))
+#}
+proc printBTreeList*(): void =
+#{
+   for idx, node in btlist:
+     printListNode(node, idx+1, len(btlist))
+   log("Total ListNodes  : %d\n", len(btlist))
+   log("Total BTreeNodes : %d\n\n", len(btarray))
+#}
+
+proc getBTreeNodeKeys*(arg_node: ref BTreeNode): string =
+#{
+   var str = ""
+   str.add("Current BTreeNode KeyList [ ")
+   var node = arg_node.bt_listhead
+   while (node != nil):
+     str.add("" & $node.key)
+     str.add(" ")
+     node = node.next
+   str.add("] ")
+
+   if (arg_node.bt_parent != nil):
+     str.add("Parent KeyList [ ")
+     var node = arg_node.bt_parent.bt_listhead
+     while (node != nil):
+       str.add("" & $node.key)
+       str.add(" ")
+       node = node.next
+     str.add("]")
+   else:
+     str.add("Parent KeyList [ NULL ] ")
+   return str
+#}
+
+proc getBTreeNodeKeysOnly*(arg_node: ref BTreeNode): string =
+#{
+   if (arg_node == nil):
+     return ""
+   var str = ""
+   str.add("[ ")
+   var node = arg_node.bt_listhead
+   while (node != nil):
+     str.add("" & $node.key)
+     str.add(" ")
+     node = node.next
+   str.add("] ")
+   return str
+#}
+
+proc getBTreeNodeOnlyStr*(arg_node: ref BTreeNode): string =
+#{
+   return getBTreeNodeKeysOnly(arg_node)
+#}
+
+proc getBTreeNodeStr*(arg_node: ref BTreeNode): string =
+#{
+   var str = getBTreeNodeKeysOnly(arg_node)
+   var node = arg_node.bt_listhead
+   #str.add("")
+   while(node != nil): #{
+     str.add("\n")
+     var left  = getLeft(node)
+     var right = getRight(node)
+     str.add("< P = " & $node.key)
+     if (left == nil):
+       str.add(" LEFT CHILD  = NULL ")
+     else:
+       str.add(" LEFT CHILD  = " & $getBTreeNodeKeysOnly(left))
+
+     if (right == nil):
+       str.add(" RIGHT CHILD = NULL ")
+     else:
+       str.add(" RIGHT CHILD = " & $getBTreeNodeKeysOnly(right))
+     str.add(">")
+     node = node.next
+   #}
+
+   return str
+#}
+
+proc getBTreeNodeOnlyKeys*(arg_node: ref BTreeNode): string =
+#{
+   return getBTreeNodeKeysOnly(arg_node)
+#}
+
+
+proc getBTreeNodeKeyList*(arg_node: ref BTreeNode): string =
+  return getBTreeNodeKeys(arg_node)
+
+proc printBTreeNodeKeys*(arg_node: ref BTreeNode): void =
+#{
+   var str = getBTreeNodeKeyList(arg_node)
+   log(str)
+#}
+
+
+proc printBTreeNodeKeysF*(arg_node: ref BTreeNode): void =
+#{
+   var str = getBTreeNodeKeyList(arg_node)
+   logf(str)
+#}
+
+proc getLeavesStr*(): string =
+#{
+   var str: string
+   for idx, btnode in btarray:
+     if (btnode.bt_numchild == 0):
+       var node = btnode.bt_listhead
+       while (node != nil):
+         printListNode(node, idx+1, btnode.bt_numchild)
+         node = node.next
+#}
+
+proc printLeaves*(): void =
+#{
+   for idx, btnode in btarray:
+     if (btnode.bt_numchild != 0):
+       var node = btnode.bt_listhead
+       while (node != nil):
+         printListNode(node, idx+1, btnode.bt_numchild)
+#}

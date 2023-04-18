@@ -1,0 +1,146 @@
+import std/math
+#import std/os
+import strutils
+import std/streams
+import std/times
+
+const BT_LOG_FILE* = "btree.log"
+const BT_ROOT    * = 1
+const BT_NODE    * = 2
+const BT_LEAF    * = 3
+
+var BT_DEGREE*   = 4                    #Degree of a BTree
+let BT_MAXKEYS * = BT_DEGREE - 1        #Max no. of keys a btree node can handle
+let BT_MAXCHLD * = BT_DEGREE            #Max no. of children. It should be BT_DEGREE
+var BT_MINCHLD * = ceil(BT_DEGREE / 2)  #Min no. of childrens for a non-root and non-leaf node.
+                                        #It should be ceil[m/2] where m is the degree/order
+
+var   BT_PREFIX  * = "BTN"
+var   BT_SUFFIX  * = 1
+###################################################
+# Linked List Node with lesser and greater pointer
+# lesser and greater points to BTreeNode 
+# pointer keyword is equivalent to void* in C or C++
+###################################################
+type #{ A Linked List Node data structure
+  ListNode* = object
+    key    *: int
+    next   *: ref ListNode
+    prev   *: ref ListNode
+    lesser *: pointer
+    greater*: pointer
+#}
+
+type #{ A BTree Node data structure
+  BTreeNode* = object
+
+    # type of tree node
+    # 1 = root 
+    # 2 = Non-Leaf and Non-Root
+    # 3 = leaf
+
+    bt_id            *: string 
+    bt_level         *: int 
+    bt_type          *: int 
+    bt_knum          *: int #No. of keys present in the current Btree node
+    bt_keylist       *: ref ListNode #List of keys this btreenode contains
+    bt_listhead      *: ref ListNode #Start node of keylist
+    bt_listtail      *: ref ListNode #tail node of keylist
+    bt_cnum          *: int #No. of children present in this node
+    bt_parent        *: ref BTreeNode
+    bt_parentKey     *: int
+    bt_parentKeyNode *: ref ListNode 
+#}
+
+type
+  SearchResult* = object
+    node      *: ref BTreeNode
+    key       *: ref ListNode
+
+#Functions imported from c language
+proc printf*(formatstr: cstring) {.importc: "printf", varargs, header: "<stdio.h>".}
+proc log*(formatstr: cstring) {.importc: "printf", varargs, header: "<stdio.h>".}
+proc snprintf(buf: cstring, cap: cint, frmt: cstring): cint {.header: "<stdio.h>", importc: "snprintf", varargs.}
+proc sprintf(buf: cstring, frmt: cstring): cint {.header: "<stdio.h>", importc: "sprintf", varargs.}
+
+# Global variables
+var btroot*:ref BTreeNode = nil
+var btarray*:seq[ref BTreeNode]
+var logstream* = newFileStream(BT_LOG_FILE, fmWrite)
+
+proc logf*(str: string): void =
+#{
+   let ts = getDateStr()
+   var logstr:string
+   logstr.add("[")
+   logstr.add(ts)
+   logstr.add("] ")
+   logstr.add(str)
+   #logstr.add("\n")
+   logstream.writeLine(logstr)
+#}
+
+proc logf*(str: string, arg1: int): void =
+#{
+   #var strout: string = newString(len(str) + sizeof(arg1))
+   #discard snprintf(strout.cstring, 128, str.cstring, arg1.cint)
+   var strout: string = newString(128)
+   var slen = sprintf(strout.cstring, str.cstring, arg1.cint)
+   strout.setLen (slen)
+   logf(strout)
+#}
+
+proc logf*(str: string, arg1: int, arg2: int): void =
+#{
+   var strout: string = newString(128)
+   #discard snprintf(strout.cstring, 128, str.cstring, arg1.cint, arg2.cint)
+   var slen = sprintf(strout.cstring, str.cstring, arg1.cint, arg2.cint)
+   strout.setLen (slen)
+   logf(strout)
+#}
+
+proc logf*(str: string, arg1: int, arg2: int, arg3: int): void =
+#{
+   var strout: string = newString(128)
+   #discard snprintf(strout.cstring, 128, str.cstring, arg1.cint, arg2.cint, arg3.cint)
+   var slen = sprintf(strout.cstring, str.cstring, arg1.cint, arg2.cint, arg3.cint)
+   strout.setLen (slen)
+   logf(strout)
+#}
+
+proc logf*(str: string, arg1: int, arg2: int, arg3: int, arg4: int): void =
+#{
+   var strout: string = newString(128)
+   #discard snprintf(strout.cstring, 128, str.cstring, arg1.cint, arg2.cint, arg3.cint, arg4.cint)
+   var slen = sprintf(strout.cstring, str.cstring, arg1.cint, arg2.cint, arg3.cint, arg4.cint)
+   strout.setLen (slen)
+   logf(strout)
+#}
+
+proc logf*(str: string, arg1: string): void =
+#{
+   var strout: string = newString(128)
+   #discard snprintf(strout.cstring, 128, str.cstring, arg1.cstring)
+   var slen = sprintf(strout.cstring, str.cstring, arg1.cstring)
+   strout.setLen (slen)
+   logf(strout)
+#}
+
+proc logf*(str: string, arg1: cstring): void =
+#{
+   var strout: string = newString(128)
+   #discard snprintf(strout.cstring, 128, str.cstring, arg1)
+   var slen = sprintf(strout.cstring, str.cstring, arg1)
+   strout.setLen (slen)
+   logf(strout)
+#}
+
+
+proc logf*(str: string, arg1: float): void =
+#{
+   var strout: string = newString(128)
+   #discard snprintf(strout.cstring, 128, str.cstring, arg1.cfloat)
+   var slen = sprintf(strout.cstring, str.cstring, arg1.cfloat)
+   strout.setLen (slen)
+   logf(strout)
+#}

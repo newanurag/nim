@@ -1,0 +1,50 @@
+import std/terminal
+import std/math
+import std/os
+import std/osproc
+import strutils
+import CommonImports
+import CommonLogger
+
+proc getch(): void =
+#{
+   getchar()
+#}
+
+proc btsleep*(x: int): void =
+#{
+   sleep(x)
+#}
+proc btsleeps*(x: int): void =
+#{
+   sleep(x * 1000)
+#}
+
+proc cls*(): void =
+#{
+   eraseScreen(stdout)
+#}
+
+proc clrscr*(): void =
+#{
+   cls()
+#}
+
+proc getint*(arg_s: string): int =
+#{
+    try:
+      return parseInt(arg_s)
+    except ValueError as e:
+      var error = getCurrentException()
+      log("ERROR: Invalid command OR %s\n", error.msg)
+#}
+
+proc getexecname(): string =
+#{
+    return getAppFilename()
+#}
+
+proc run*(cmd: string): int =
+#{
+    return os.execShellCmd(cmd)
+#}

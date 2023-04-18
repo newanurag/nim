@@ -1,0 +1,223 @@
+import std/math
+#import std/os
+import strutils
+import BTreeHeader
+
+proc getid*(): string =
+#{
+   var idstr: string = BT_PREFIX
+   var ids = BT_SUFFIX
+   idstr.add("[")
+   idstr.add(intToStr(ids))
+   idstr.add("]")
+   BT_SUFFIX = BT_SUFFIX + 1
+   return idstr
+#}
+
+proc newListNode*(key: int): ref ListNode =
+#{
+   var obj     = new ListNode
+   obj.key     = key
+   obj.next    = nil
+   obj.prev    = nil
+   obj.lesser  = nil
+   obj.greater = nil
+   return obj
+#}
+
+proc newBTreeNode*(key: int): ref BTreeNode =
+#{
+   var lnode         = newListNode(key)
+   var bnode         = new BTreeNode
+   #bnode.bt_kstart   = key
+   #bnode.bt_kend     = key
+   bnode.bt_id       = getid()
+   log("BTreeNode Created with ID %s for key [%d]\n", (bnode.bt_id), key);
+   bnode.bt_listhead = lnode
+   bnode.bt_listtail = lnode
+   bnode.bt_keylist  = lnode
+   bnode.bt_type     = BT_LEAF
+   bnode.bt_knum     = 1
+   bnode.bt_cnum     = 0
+   btarray.add(bnode)
+   return bnode
+#}
+
+proc newBTreeNode*(node: ref ListNode): ref BTreeNode =
+#{
+   var lnode           = node
+   var bnode           = new BTreeNode
+   #bnode.bt_kstart    = key
+   #bnode.bt_kend      = key
+   bnode.bt_id         = getid()
+   log("BTreeNode Created with ID [%s]\n", bnode.bt_id);
+   bnode.bt_listhead   = lnode
+   bnode.bt_keylist    = lnode
+   bnode.bt_type       = BT_LEAF
+   bnode.bt_knum       = 0
+   bnode.bt_cnum       = 0
+   
+   while(lnode != nil):
+     bnode.bt_knum     = bnode.bt_knum + 1
+     bnode.bt_listtail = lnode
+     lnode = lnode.next
+   
+   btarray.add(bnode)
+   return bnode
+#}
+
+proc getAddress*(root: ref BTreeNode): int64 =
+#{
+   #var v  = cast[int64](unsafeAddr(root[]))
+   var v2 = cast[int64](cast[pointer](root))
+   #stdout.write(" BTreeNode         = 0x" & v2.toHex & "\n")
+   #echo " BTreeNode         = 0x",v.toHex
+   #echo root.repr
+   
+   return v2
+#}
+
+proc getAddressHex*(root: ref BTreeNode): cstring =
+#{
+   #var v  = cast[int64](unsafeAddr(root[]))
+   #var v2 = cast[int64](cast[pointer](root))
+   var v2 = getAddress(root)
+   #stdout.write(" BTreeNode         = 0x" & v2.toHex & "\n")
+   #echo " BTreeNode         = 0x",v.toHex
+   #echo root.repr
+   var  str =  "0x"
+   str.add(v2.toHex)
+   var outstr:cstring = str.cstring
+   return outstr
+   #return "0x" & v2.toHex
+#}
+
+proc getAddress*(head: ref ListNode): int64 =
+#{
+   #var v  = cast[int64](unsafeAddr(head[]))
+   var v2 = cast[int64](cast[pointer](head))
+   return v2
+#}
+
+proc getAddressHex*(head: ref ListNode): cstring =
+#{
+   #var v  = cast[int64](unsafeAddr(head[]))
+   var v2 = cast[int64](cast[pointer](head))
+   #var outstr = cast[cstring]( "0x" & v2.toHex)
+   var  str =  "0x"
+   str.add(v2.toHex)
+   var outstr:cstring = str.cstring
+   return outstr
+   #return "0x" & v2.toHex
+#}
+
+proc getMiddleNode*(head: ref ListNode): ref ListNode =
+#{
+   if (head == nil): 
+     return nil
+   var slow = head
+   var fast = head
+
+   while (fast != nil and fast.next != nil): #{
+     slow = slow.next
+     fast = fast.next.next
+   #}  
+   return slow
+#}
+
+proc getMiddle*(head: ref ListNode): ref ListNode =
+#{
+   return getMiddleNode(head)
+#}
+
+proc getMiddleNode*(root: ref BTreeNode): ref ListNode =
+#{
+   if (root == nil):
+     return nil
+
+   var slow = root.bt_listhead
+   var fast = root.bt_listhead
+
+   while (fast != nil and fast.next != nil): #{
+     #printListNode(slow, "SLOW")
+     #printListNode(fast, "FAST")
+     slow = slow.next
+     fast = fast.next.next
+   #}  
+   return slow
+#}
+
+proc getLeft*(node: ref ListNode): ref BTreeNode =
+#{
+   var left = cast[ref BTreeNode](node.lesser)
+   return left
+#}
+
+proc getLeft*(root: ref BTreeNode): ref BTreeNode =
+#{
+   var left = cast[ref BTreeNode](root.bt_listhead.lesser)
+   return left
+#}
+
+proc getRight*(node: ref ListNode): ref BTreeNode =
+#{
+   var right = cast[ref BTreeNode](node.greater)
+   return right
+#}
+
+proc getRight*(root: ref BTreeNode): ref BTreeNode =
+#{
+   var right = cast[ref BTreeNode](root.bt_listtail.greater)
+   return right
+#}
+
+proc adjust*(root: var ref BTreeNode): void =
+#{
+   var head = root.bt_keylist
+   root.bt_knum = 0 
+   root.bt_cnum = 0 
+
+   while(head != nil): #{
+     root.bt_knum = root.bt_knum + 1 
+
+     if (head.lesser != nil):
+       root.bt_cnum = root.bt_cnum + 1 
+
+     if (head.greater != nil):
+       root.bt_cnum = root.bt_cnum + 1 
+
+     root.bt_listtail = head
+     head = head.next
+   #}  
+#}
+
+proc setLeft*(node: var ref ListNode, left: var ref BTreeNode): void =
+#{
+   #var leftp = cast[ref BTreeNode](node.lesser)
+   #leftp = left
+   node.lesser = cast[pointer](left)
+#}
+
+proc setLeft*(root: var ref BTreeNode, left: ref BTreeNode): void =
+#{
+   #var leftp = cast[ref BTreeNode](root.bt_listhead.lesser)
+   #leftp = left
+   root.bt_listhead.lesser = cast[pointer](left)
+   root.bt_cnum = root.bt_cnum + 1
+#}
+
+
+proc setRight*(node: var ref ListNode, right: var ref BTreeNode): void =
+#{
+   #var rightp = cast[ref BTreeNode](node.greater)
+   #rightp = right
+   node.greater = cast[pointer](right)
+#}
+
+proc setRight*(root: var ref BTreeNode, right: ref BTreeNode): void =
+#{
+   #var rightp = cast[ref BTreeNode](root.bt_listtail.greater)
+   #rightp = right
+   root.bt_listtail.greater = cast[pointer](right)
+   root.bt_cnum = root.bt_cnum + 1
+#}

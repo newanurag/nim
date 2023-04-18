@@ -1,0 +1,48 @@
+######################################################################
+# Ring Buffer Implementation
+######################################################################
+
+const RING_BUFFER_SIZE:int = 10
+
+type
+  RingBuffer = object
+    buffer:   array[RING_BUFFER_SIZE, string]
+    size:     int
+    readidx:  int
+    writeidx: int
+
+
+type
+  RingBufferOps = object
+    setData: proc(obj: ref RingBuffer, data: string): void
+    getData: proc(obj: ref RingBuffer): string
+    isEmpty: proc(obj: ref RingBuffer):bool
+    isFull:  proc(obj: ref RingBuffer):bool
+
+var RBObj:ref RingBuffer
+
+proc RingBufferInit():void =
+#{
+  RBObj = new(RingBuffer)
+  RBObj.size = RING_BUFFER_SIZE
+  RBObj.readidx = -1
+  RBObj.writeidx = -1
+#}
+
+proc isFull(obj: ref RingBuffer):bool =
+#{
+   int tmp = obj.writeidx mod RING_BUFFER_SIZE
+   
+   if (tmp == obj.readidx):
+     return true
+   else:
+     return false
+
+#}
+
+proc setData: proc(obj: ref RingBuffer, data: string): void =
+#{
+   write
+
+#}
+    

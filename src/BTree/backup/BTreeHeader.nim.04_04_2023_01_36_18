@@ -1,0 +1,87 @@
+import std/math
+#import std/os
+import strutils
+import std/streams
+import std/times
+import CommonLogger
+
+########################################################
+# Data Structures
+########################################################
+
+# Linked List Node with leftBTreeNode and rightBTreeNode 
+# pointer keyword is equivalent to void* in C or C++
+
+type #{ A Linked List Node data structure
+  ListNode* = object
+    key           *: int
+    data          *: pointer
+    next          *: ref ListNode
+    prev          *: ref ListNode
+    leftBTreeNode *: pointer
+    rightBTreeNode*: pointer
+    
+#}
+
+type #{ A BTree Node data structure
+  BTreeNode* = object
+
+    # type of tree node
+    # 1 = root 
+    # 2 = Non-Leaf and Non-Root
+    # 3 = leaf
+
+    bt_id            *: string 
+    bt_type          *: int 
+    bt_numkeys       *: int #No. of keys present in the current Btree node
+    bt_listhead      *: ref ListNode #Start node of keylist
+    bt_listtail      *: ref ListNode #tail node of keylist
+    bt_cnum          *: int #No. of children present in this node
+    bt_parent        *: ref BTreeNode
+#}
+
+type # An object used to return the search result
+  SearchResult* = object
+    node      *: ref BTreeNode
+    key       *: ref ListNode
+
+########################################################
+# Global variables
+########################################################
+
+var BT_LOG_FILE  * = "btree.log"
+const BT_ROOT    * = 1
+const BT_NODE    * = 2
+const BT_LEAF    * = 3
+
+var BT_DEGREE*   = 3                    #Degree of a BTree
+let BT_MAXKEYS * = BT_DEGREE - 1        #Max no. of keys a btree node can handle
+let BT_MAXCHLD * = BT_DEGREE            #Max no. of children. It should be BT_DEGREE
+var BT_MINCHLD * = ceil(BT_DEGREE / 2)  #Min no. of childrens for a non-root and non-leaf node.
+                                        #It should be ceil[m/2] where m is the degree/order
+var   BT_PREFIX  * = "BTN"
+var   BT_SUFFIX  * = 1
+
+# The root of the BTree
+var btroot *:ref BTreeNode = nil
+
+#Array of BTreeNode data structure currently present in BTree
+var btarray*:seq[ref BTreeNode]
+
+#Array of  ListNode (Linked List data structure)  currently present in BTree
+var btlist *:seq[ref ListNode]
+
+########################################################
+#Function Declaration Prototype
+########################################################
+
+#BTree Creation
+#proc createBTree*(root: var ref BTreeNode, parent: var ref BTreeNode, key: int):ref BTreeNode
+#proc createBTree*(keys: seq[int]):ref BTreeNode
+
+#Searching
+#proc findLeafBTreeNode*(root: ref BTreeNode, key: int): ref BTreeNode
+#proc searchBTree*(root: ref BTreeNode, key: int): ref SearchResult
+
+#Traversal
+#proc inorderBTree*(root: ref BTreeNode): void

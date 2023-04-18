@@ -1,0 +1,215 @@
+=================
+Deletion in BTree
+=================
+Before going through the steps below, one must know these facts about a B tree of degree m.
+
+A node can have a maximum of m children. (i.e. 3)
+A node can contain a maximum of m - 1 keys. (i.e. 2)
+A node should have a minimum of ⌈m/2⌉ children. (i.e. 2)
+A node (except root node) should contain a minimum of ⌈m/2⌉ - 1 keys. (i.e. 1)
+
+
+Deletion in a BTree can happen at three levels
+1. Leaf Level
+2. Intermediate node level
+3. Root level
+
+This paper talks about deletion at leaf level ie. #1
+Here also multiple cases can arise:
+
+======
+CASE1:
+====== 
+When a key-to-be-deleted is a part of leaf node and its numkeys is greater than minkeys
+
+Before Deletion :
+=================
+
+Order m = 3
+minkeys = 1
+         ______________
+        |  A---------B |
+         --------------
+      __ /   \_____    \__
+     |a1|    |a2-a3|   |b1|
+
+Inorder   : a1 A a2 a3 B b1
+Delete    : a3
+Expected  : a1 A a2    B b1
+
+Algorithm :
+===========
+1. Delete a3 
+2. Decrement numkeys count from a2 node
+
+
+After  Deletion :
+=================
+         ______________
+        |  A---------B |
+         --------------
+      __ /   \__       \__
+     |a1|    |a2|      |b1|
+
+
+======
+CASE2:
+======
+When a key-to-be-deleted is a part of leaf node and its numkeys is equal to minkeys
+but the left and/or right sibling's numkeys of leaf node are greater than minkeys
+In this case, Borrowing of key from left or right siblings takes place
+If borrowed from left sibling then a clockwise shift will happen from left to right
+If borrowed from right sibling then an anti clockwise shift will happend from right to left
+Priority will be given to clockwise shift if number of keys in both the siblings are same
+and greater than leaf node numkeys
+
+Before Deletion :
+=================
+Order m = 3
+minkeys = 2
+         ______________
+        |  A---------B |
+         --------------
+      ___/_  \__      \______
+     |a1-a2| |a3|      |b1-b2|
+
+Inorder   : a1 a2 A a3 B b1 b2
+Delete    : a3
+Expected  : a1 a2 A B b1 b2
+
+Algorithm :
+===========
+1. Disconnect  a2 with a1
+2. Decrement numkeys count from a1 node
+3. copy a2 key to parent A so that a2 will become new parent
+4. copy parent A key to a3 so that A will become new right child
+5. Now delete the memory of a2 node
+
+Order m = 5
+minkeys = 2
+
+
+After Deletion  :
+=================
+         ______________
+        |  a2--------B |
+         --------------
+         /_  \__      \______
+        |a1| | A|      |b1-b2|
+
+Inorder   : a1 a2 A B b1 b2
+
+======
+CASE3: 
+======
+When a key-to-be-deleted is a part of leaf node whose numkeys is equal to minkeys.
+In addition to that, the left and right sibling of the leaf node also have numkeys equal to minkeys 
+In this case, demotion of parent key happens. This requires merging of parent with child nodes
+
+============
+Scenario  1:
+============
+Before Deletion :
+=================
+         ________
+        |  A---B |
+         --------
+      __ /   \__  \__
+     |a1|    |a2| |b1|
+
+Inorder   : a1 A a2 B b1
+Delete    : a1
+Expected  :    A a2 B b1
+
+Algorithm 1:
+============
+1. Remove Parent Child relationship between A and a1 and make them independent nodes
+2. Merge 'A' with a2  i.e [A - a2] in sorted manner
+3. Make Parent Child relation ship between B and new merger i.e [A - a2]
+4. Delete a1 BTreeNode memory
+5. Delete BTreeNode memory  of A because it is going downwards
+6. Decrement numkeys of Parent BTreeNode B
+7. Increment numkeys of new merged child [A - a2]
+
+Outcome   1:
+============
+After Deletion  :
+=================
+              ___
+             | B |
+             -----
+      ______/    \__
+     |A---a2|    |b1|
+
+Inorder: A a2 B b1
+
+============
+Scenario  2:
+============
+Before Deletion :
+=================
+         ________
+        |  A---B |
+         --------
+      __ /   \__  \__
+     |a1|    |a2| |b1|
+
+Inorder  : a1 A a2 B b1
+Delete   : a2
+Expected : a1 A    B b1
+
+Algorithm 2:
+============
+1. Remove Parent Child relationship between A and a2 and make them independent nodes
+2. Merge 'a1' with A i.e. [a1 - A] in sorted manner
+3. Make Parent Child relation ship between B and new merger i.e [a1 - A]
+4. Delete a2 BTreeNode memory
+5. Delete BTreeNode memory  of A because it is going downwards
+6. Decrement numkeys of Parent BTreeNode B
+7. Increment numkeys of new merged child [a1 - A]
+
+Outcome   2:
+============
+After Deletion  :
+=================
+              ___
+             | B |
+             -----
+      ______/    \__
+     |a1---A|    |b1|
+
+Inorder  : a1 A B b1
+
+============
+Scenario  3:
+============
+Before Deletion :
+=================
+         ________
+        |  A---B |
+         --------
+      __ /   \__  \__
+     |a1|    |a2| |b1|
+
+Inorder  : a1 A a2 B b1
+Delete   : b1
+Expected : a1 A a2 B
+
+Algorithm 3:
+============
+1. Remove Parent Child relationship between B and b1 and make them independent nodes
+1. Merge 'B' with a2 i.e. [a2 - B] in sorted manner
+2. Delete b1 BTreeNode memory
+3. Delete BTreeNode memory  of B because it is going downwards
+6. Decrement numkeys of Parent BTreeNode A
+7. Increment numkeys of new merged child [a2 - B]
+
+Outcome   3:
+============
+After Deletion  :
+=================
+         _____
+         | A |    
+          --- 
+      __ /   \______
+     |a1|    |a2---B|  

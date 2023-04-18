@@ -1,0 +1,40 @@
+###########################################
+5) NETWORKING / SOCKET PROGRAMMING
+###########################################
+
+Server Side
+===========
+proc newAsyncSocket(domain: Domain = AF_INET; sockType: SockType = SOCK_STREAM;
+                    protocol: Protocol = IPPROTO_TCP; buffered = true;
+                    inheritable = defined(nimInheritHandles)): owned(AsyncSocket) {.
+    ....}
+
+proc bindAddr(socket: AsyncSocket; port = Port(0); address = "") {.....}
+  If address is "" then ADDR_ANY will be bound.
+
+proc listen(socket: AsyncSocket; backlog = SOMAXCONN) {.....}
+proc accept(socket: AsyncSocket; flags = {SafeDisconn}): owned(Future[AsyncSocket]) {.....}
+proc close(socket: AsyncSocket) {.....}
+
+
+###########################################
+6) THREADS / THREADING / MULTITHREADING
+###########################################
+Threading is a part of system module package. Do not import it directly.
+To activate thread support, Need to compile the code with --threads:on command line switch.
+thread pragma should be used by the proc/function
+Threads can be created through two ways:
+ CreateThread
+ spawn
+
+Each thread has its own garbage collected heap and sharing of memory is restricted.
+The invoked proc/function must not use var parameters nor ref parameters or closure type
+
+###########################################
+7) ASYNC AWAIT
+###########################################
+It is for asynchronous IO.
+It includes:
+	async macro along with await keyword
+	dispatcher
+	Future type implementation

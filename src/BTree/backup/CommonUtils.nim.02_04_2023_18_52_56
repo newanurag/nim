@@ -1,0 +1,18 @@
+import std/math
+import std/os
+import strutils
+import CommonLogger
+
+proc getch(): void =
+#{
+   getchar()
+#}
+
+proc btsleep*(x: int): void =
+#{
+   sleep(x)
+#}
+proc btsleeps*(x: int): void =
+#{
+   sleep(x * 1000)
+#}

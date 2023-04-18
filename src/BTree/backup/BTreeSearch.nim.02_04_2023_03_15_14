@@ -1,0 +1,45 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import BTreeLogs
+import BTreeHeader
+import BTreeUtils
+import BTreePrints
+
+proc search*(root: ref BTreeNode, key: int): ref SearchResult =
+#{
+   if (root == nil):
+     return nil
+
+   var head = root.bt_listhead
+   var tail = root.bt_listtail
+
+   if (key < head.key):
+     printf("key [%d] is LEFT of [%d]\n",key, head.key);
+     return search(getLeft(root), key)
+
+   if (key > tail.key):
+     printf("key [%d] is RIGHT of [%d]\n",key, head.key);
+     return search(getRight(root), key)
+
+   while(head != nil): #{
+     if (key == head.key):
+       var outobj = new SearchResult
+       outobj.node = root
+       outobj.key  = head
+       return outobj
+    
+     if (head.greater != nil):
+       return search(getRight(head), key)
+
+     head = head.next
+   #}
+
+#}

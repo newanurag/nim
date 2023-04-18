@@ -1,0 +1,410 @@
+import std/math
+import std/os
+import strutils
+import CommonImports
+import CommonLogger
+import CommonUtils
+import BTreeHeader
+
+proc getid*(): string =
+#{
+   var idstr: string = BT_PREFIX
+   var ids = BT_SUFFIX
+   idstr.add("[")
+   idstr.add(intToStr(ids))
+   idstr.add("]")
+   BT_SUFFIX = BT_SUFFIX + 1
+   return idstr
+#}
+
+proc btsleep*(x: int): void =
+#{
+   sleep(x)
+#}
+proc btsleeps*(x: int): void =
+#{
+   sleep(x * 1000)
+#}
+
+proc newListNode*(key: int): ref ListNode =
+#{
+   var obj            = new ListNode
+   if (obj == nil):
+     log("Error: Unable to allocate memory for ListNode\n")
+     return nil
+   obj.key            = key
+   obj.next           = nil
+   obj.prev           = nil
+   obj.leftBTreeNode  = nil
+   obj.rightBTreeNode = nil
+   btlist.add(obj)
+   #log("ListNode [%d] Created for key [%d]\n",len(btlist), key);
+   logf("ListNode [%d] Created for key [%d]\n",len(btlist), key);
+   return obj
+#}
+
+proc newBTreeNode*(): ref BTreeNode =
+#{
+   var bnode         = new BTreeNode
+   if (bnode == nil):
+     log("Error: Unable to allocate memory for BTreeNode\n")
+     return nil
+   bnode.bt_id       = getid()
+   bnode.bt_listhead = nil
+   bnode.bt_listtail = nil
+   bnode.bt_type     = BT_LEAF
+   bnode.bt_numkeys  = 0
+   bnode.bt_numchild = 0
+   bnode.bt_parent   = nil
+   log("BTreeNode %s Created\n", bnode.bt_id);
+   logf("BTreeNode %s Created\n", bnode.bt_id);
+   btarray.add(bnode)
+   return bnode
+#}
+
+proc newBTreeNode*(key: int): ref BTreeNode =
+#{
+   var lnode         = newListNode(key)
+   var bnode         = new BTreeNode
+   if (bnode == nil):
+     log("Error: Unable to allocate memory for BTreeNode\n")
+     return nil
+   #bnode.bt_kstart  = key
+   #bnode.bt_kend    = key
+   bnode.bt_id       = getid()
+   bnode.bt_listhead = lnode
+   bnode.bt_listtail = lnode
+   bnode.bt_type     = BT_LEAF
+   bnode.bt_numkeys  = 1
+   bnode.bt_numchild = 0
+   bnode.bt_parent   = nil
+   #log("BTreeNode %s Created for key [%d]\n", (bnode.bt_id), lnode.key);
+   logf("BTreeNode %s Created for key [%d]\n", (bnode.bt_id), lnode.key);
+   btarray.add(bnode)
+   return bnode
+#}
+
+proc newBTreeNode*(node: ref ListNode): ref BTreeNode =
+#{
+   var lnode           = node
+   var bnode           = new BTreeNode
+   if (bnode == nil):
+     log("Error: Unable to allocate memory for BTreeNode\n")
+     return nil
+   bnode.bt_id         = getid()
+   bnode.bt_listhead   = lnode
+   bnode.bt_type       = BT_LEAF
+   bnode.bt_numkeys    = 0
+   bnode.bt_numchild       = 0
+
+   #log("BTreeNode %s Created for key [%d]\n", (bnode.bt_id), lnode.key);
+   logf("BTreeNode %s Created for key [%d]\n", (bnode.bt_id), lnode.key);
+   
+   while(lnode != nil):
+     bnode.bt_numkeys  = bnode.bt_numkeys + 1
+     bnode.bt_listtail = lnode
+     lnode = lnode.next
+   
+   btarray.add(bnode)
+   return bnode
+#}
+
+proc getMiddleNode*(head: ref ListNode): ref ListNode =
+#{
+   if (head == nil): 
+     return nil
+   var slow = head
+   var fast = head
+
+   while (fast != nil and fast.next != nil): #{
+     slow = slow.next
+     fast = fast.next.next
+   #}  
+   return slow
+#}
+
+proc getMiddle*(head: ref ListNode): ref ListNode =
+#{
+   return getMiddleNode(head)
+#}
+
+proc getMiddleNode*(root: ref BTreeNode): ref ListNode =
+#{
+   if (root == nil):
+     return nil
+
+   var slow = root.bt_listhead
+   var fast = root.bt_listhead
+
+   while (fast != nil and fast.next != nil): #{
+     #printListNode(slow, "SLOW")
+     #printListNode(fast, "FAST")
+     slow = slow.next
+     fast = fast.next.next
+   #}  
+   return slow
+#}
+
+proc getParentListNode*(node: ref ListNode): ref ListNode =
+#{
+   return node.parentListNode
+#}
+
+proc setParentListNode*(node: var ref ListNode, pListNode: ref ListNode): void =
+#{
+    node.parentListNode = pListNode
+#}
+
+proc setParentListNodeAll*(list: var ref ListNode, pListNode: ref ListNode): void =
+#{
+    var node = list
+    while(node != nil):
+      setParentListNode(node, pListNode)
+      node = node.next
+#}
+
+proc setParentListNodeAll*(btnode: var ref BTreeNode, pListNode: ref ListNode): void =
+#{
+    var node = btnode.bt_listhead
+    while(node != nil):
+      setParentListNode(node, pListNode)
+      node = node.next
+#}
+
+proc getParent*(node: ref ListNode): ref BTreeNode =
+#{
+   return cast[ref BTreeNode](node.parentBTreeNode)
+#}
+
+proc getParent*(btnode: ref BTreeNode): ref BTreeNode =
+#{
+   return btnode.bt_parent
+#}
+
+proc setParent*(node: ref ListNode, pbtnode: ref BTreeNode): void =
+#{
+    node.parentBTreeNode = cast[pointer] (pbtnode)
+#}
+
+proc setParentAll*(list: ref ListNode, pbtnode: ref BTreeNode): void =
+#{
+    var node = list
+    while(node != nil):
+      setParent(node, pbtnode)
+      node = node.next
+
+#}
+
+proc setParent*(btnode: ref BTreeNode, pbtnode: ref BTreeNode): void =
+#{
+    btnode.bt_parent = pbtnode
+#}
+
+# Set the parent for both left and right child
+proc setParent*(leftbtnode: ref BTreeNode,
+               rightbtnode: ref BTreeNode,
+               parent: ref BTreeNode): void =
+#{
+    setParent(leftbtnode, parent)
+    setParent(rightbtnode, parent)
+#}
+
+proc getLeft*(node: ref ListNode): ref BTreeNode =
+#{
+   #var left = cast[ref BTreeNode](node.leftBTreeNode)
+   #return left
+   return cast[ref BTreeNode](node.leftBTreeNode)
+#}
+
+proc getLeft*(root: ref BTreeNode): ref BTreeNode =
+#{
+   #var left = cast[ref BTreeNode](root.bt_listhead.leftBTreeNode)
+   #return left
+   return getLeft(root.bt_listhead)
+#}
+
+proc getRight*(node: ref ListNode): ref BTreeNode =
+#{
+   #var right = cast[ref BTreeNode](node.rightBTreeNode)
+   #return right
+   return cast[ref BTreeNode](node.rightBTreeNode)
+#}
+
+proc getRight*(root: ref BTreeNode): ref BTreeNode =
+#{
+   #var right = cast[ref BTreeNode](root.bt_listtail.rightBTreeNode)
+   #return right
+   return getRight(root.bt_listtail)
+#}
+
+proc setLeft*(node: var ref ListNode, left: ref BTreeNode): void =
+#{
+   #var leftp = cast[ref BTreeNode](node.leftBTreeNode)
+   #leftp = left
+   node.leftBTreeNode = cast[pointer](left)
+#}
+
+proc setLeft*(root: var ref BTreeNode, left: ref BTreeNode): void =
+#{
+   #var leftp = cast[ref BTreeNode](root.bt_listhead.leftBTreeNode)
+   #leftp = left
+   #root.bt_listhead.leftBTreeNode = cast[pointer](left)
+   #root.bt_numchild = root.bt_numchild + 1
+   setLeft(root.bt_listhead, left)
+#}
+
+proc setRight*(node: var ref ListNode, right: ref BTreeNode): void =
+#{
+   #var rightp = cast[ref BTreeNode](node.rightBTreeNode)
+   #rightp = right
+   node.rightBTreeNode = cast[pointer](right)
+#}
+
+proc setRight*(root: var ref BTreeNode, right: ref BTreeNode): void =
+#{
+   #var rightp = cast[ref BTreeNode](root.bt_listtail.rightBTreeNode)
+   #rightp = right
+   #root.bt_listtail.rightBTreeNode = cast[pointer](right)
+   #root.bt_numchild = root.bt_numchild + 1
+   setRight(root.bt_listtail, right)
+#}
+
+proc setLeftRight*(middlebtnode: var ref BTreeNode,
+                   leftbtnode: ref BTreeNode,
+                   rightbtnode: ref BTreeNode): void =
+#{
+   setLeft(middlebtnode, leftbtnode)
+   setRight(middlebtnode, rightbtnode)
+#}
+
+
+proc setLeftRight*(middleListNode: var ref ListNode,
+                   leftbtnode: ref BTreeNode,
+                   rightbtnode: ref BTreeNode): void =
+#{
+   setLeft(middleListNode, leftbtnode)
+   setRight(middleListNode, rightbtnode)
+#}
+
+proc setData*(node: var ref ListNode, data: pointer): void =
+#{
+   node.data = cast[pointer](data)
+#}
+
+proc getbsize*(): int =
+#{
+  return len(btarray)
+#}
+
+proc getAddress*(root: ref BTreeNode): int64 =
+#{
+   #var v  = cast[int64](unsafeAddr(root[]))
+   var v2 = cast[int64](cast[pointer](root))
+   #stdout.write(" BTreeNode         = 0x" & v2.toHex & "\n")
+   #echo " BTreeNode         = 0x",v.toHex
+   #echo root.repr
+   
+   return v2
+#}
+
+proc getAddressHex*(root: ref BTreeNode): cstring =
+#{
+   #var v  = cast[int64](unsafeAddr(root[]))
+   #var v2 = cast[int64](cast[pointer](root))
+   var v2 = getAddress(root)
+   #stdout.write(" BTreeNode         = 0x" & v2.toHex & "\n")
+   #echo " BTreeNode         = 0x",v.toHex
+   #echo root.repr
+   var  str =  "0x"
+   str.add(v2.toHex)
+   var outstr:cstring = str.cstring
+   return outstr
+   #return "0x" & v2.toHex
+#}
+
+proc getAddress*(head: ref ListNode): int64 =
+#{
+   #var v  = cast[int64](unsafeAddr(head[]))
+   var v2 = cast[int64](cast[pointer](head))
+   return v2
+#}
+
+proc getAddressHex*(head: ref ListNode): cstring =
+#{
+   #var v  = cast[int64](unsafeAddr(head[]))
+   var v2 = cast[int64](cast[pointer](head))
+   #var outstr = cast[cstring]( "0x" & v2.toHex)
+   var  str =  "0x"
+   str.add(v2.toHex)
+   var outstr:cstring = str.cstring
+   return outstr
+   #return "0x" & v2.toHex
+#}
+
+proc adjustBTreeNode(root: var ref BTreeNode): void =
+#{
+   var head = root.bt_listhead
+   var tail:ref ListNode = nil
+   root.bt_numkeys = 0 
+   root.bt_numchild = 0 
+
+   while(head != nil): #{
+     root.bt_numkeys = root.bt_numkeys + 1 
+
+     if (head.leftBTreeNode != nil):
+       root.bt_numchild = root.bt_numchild + 1 
+
+     if (head.rightBTreeNode != nil):
+       root.bt_numchild = root.bt_numchild + 1 
+
+     #[
+     var leftBTreeNode = getLeft(head)
+     if (leftBTreeNode != nil and tail != nil):
+       setRight(tail, leftBTreeNode)
+       setLeft(head, nil)
+     ]#
+
+     tail = head
+     head = head.next
+   #}  
+   root.bt_listtail = tail
+#}
+
+proc setRoot*(btnode: var ref BTreeNode): void =
+#{
+    btroot = btnode
+    btroot.bt_type = BT_ROOT
+#}
+
+proc getRoot*(): ref BTreeNode =
+#{
+    return btroot
+#}
+
+proc getIDStr*(root: ref BTreeNode): string =
+#{
+    return root.bt_id
+#}
+
+proc getIDStr*(): string =
+#{
+    return getIDStr(getRoot())
+#}
+
+proc setType*(btnode: ref BTreeNode, arg_type: int): void =
+#{
+    btnode.bt_type = arg_type
+#}
+
+proc getNumKeys*(btnode: ref BTreeNode): int =
+#{
+    if (btnode != nil):
+      return btnode.bt_numkeys
+    else:
+      return -1
+#}
+
+proc getNumKeys*(): int =
+#{
+    return getNumKeys(getRoot())
+#}

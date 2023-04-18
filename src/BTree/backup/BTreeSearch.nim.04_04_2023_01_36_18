@@ -1,0 +1,86 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import CommonImports
+import CommonLogger
+import CommonUtils
+import BTreeHeader
+import BTreeUtils
+import BTreePrints
+
+proc findLeafBTreeNode*(root: ref BTreeNode, key: int): ref BTreeNode =
+#{
+   if (root == nil):
+     return nil
+   var minkey = root.bt_listhead.key
+   var maxkey = root.bt_listtail.key
+
+   #printf("findleaf for key %d root %d\n", key, minkey)
+   if (key > minkey and key < maxkey): #{
+     var node = root.bt_listhead
+     while(node != nil): #{
+       var right = getRight(node)
+       if (right != nil): #{
+         var bnode = findLeafBTreeNode(right, key)
+         if (bnode != nil): #{
+           return bnode
+         #}
+       #}
+       node = node.next
+     #} End of while loop
+     return root
+   #} End of top level if condition
+
+   if (key < minkey): #{
+     var left = getLeft(root)
+     if (left == nil):
+       return root
+     else:
+       return findLeafBTreeNode(left, key)
+   #}
+
+   if (key > maxkey): #{
+     var right = getRight(root)
+     if (right == nil):
+       return root
+     else:
+       return findLeafBTreeNode(right, key)
+   #}
+#}
+
+proc searchBTree*(root: ref BTreeNode, key: int): ref SearchResult =
+#{
+   if (root == nil):
+     return nil
+
+   var head = root.bt_listhead
+   var tail = root.bt_listtail
+
+   if (key < head.key):
+     printf("key [%d] is LEFT of [%d]\n",key, head.key);
+     return searchBTree(getLeft(root), key)
+
+   if (key > tail.key):
+     printf("key [%d] is RIGHT of [%d]\n",key, head.key);
+     return searchBTree(getRight(root), key)
+
+   while(head != nil): #{
+     if (key == head.key):
+       var outobj = new SearchResult
+       outobj.node = root
+       outobj.key  = head
+       return outobj
+    
+     if (head.rightBTreeNode != nil):
+       return searchBTree(getRight(head), key)
+
+     head = head.next
+   #}
+#}

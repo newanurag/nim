@@ -1,0 +1,372 @@
+B TREE - White Paper
+
+Two types of insertion happens in BTree
+Type-1: When root is not yet formulated
+=======================================
+1. Insert new key when leaf node is empty
+   Fine
+2. Insert new key when leaf node is partially empty
+   Fine
+3. Insert new key when leaf node is already full
+   1. Split the leaf BTreeNode and find the median or middle node
+   2. Create a new BTreeNode which contains the keys as middle node. This node is the root
+   3. The left side keys list  becomes the new left. Its parent is set as root 
+   4. A new BTreeNode is created for right side keys also. Its parent is also set as root
+4. After successful insertion, the root of BTree is formulated
+
+Type-2: When root is already present
+====================================
+Three cases exists:
+CASE-1: Extreme Left  Insertion
+CASE-2: Extreme Right Insertion
+CASE-3: Intermediate NODE Insertion
+
+In all the above cases, first the Target BTree LEAF node is identifed.
+Identification of target node is achieved through Binary Search method.
+The search starts from the ROOT and then move downwards i.e from top to bottom
+Once the target node is identifed then real work starts.
+Insertion in target node is always in sorted order. This is same as Type-1 
+insertion, until the target node is overflowed i.e. it is having more than
+TreeOrder - 1 keys.
+In case of overflowed target node, a median/middle node is identifed.
+This middle node is promoted to its parent node so that the max allowed
+keys of target node are maintained.
+Overflow is a recursive process, i.e. once a median node is promoted into its
+parent then parent node can also be overflowed. Same process of finding the 
+middle is followed in the parent node and the process goes on until the max
+allowed keys are maintainted or a new root is formulated again.
+
+Insertion is a complex process and it always happens from bottom to top. 
+Due to this complexity the root of the BTree keeps on changing.
+This is differnt than a normal Binary Tree or BST
+
+
+=========================================================
+CASE 1. Extreme Left  Insertion
+=========================================================
+RST = Right Subtree
+LST = Left  Subtree
+    
+                       ____________[ 9 ]___________
+                      /______                      \
+                     [ 3 | 7 ]                     TD
+                    /    \   \
+                    TA   TB   TC 
+Here are the upward pointers
+3.parent = 9
+7.parent = 9
+TD. parent = 9
+
+Here are the downward pointers
+9.LST = [3 | 7]
+9.RST = TD
+3.LST = TA
+3.RST = TB
+7.RST = TC
+7.LST = NULL
+
+Now when 5 is getting inserted
+Assume 5 node is having its Right Sub Tree Node TN also.
+
+                       ____________[ 9 ]___________
+                      /__________                  \
+                     [ 3 | 5 | 7 ]                  TD
+                    /    \   \   \
+                    TA   TB   TN  TC
+
+Intermediate state when node is inserted but split did not happen
+Here are the downward pointers. Upward pointers are same
+9.LST = [ 3 | 5 | 9] - SAME
+9.RST = T4
+3.LST = TA
+3.RST = TB
+5.RST = TN (NEWLY ADDED)
+
+When the split happened 
+1. The  parent of 3 nd 7 is changed to 5
+   3.parent = 5
+   7.parent = 7
+2. The RST of 5 i.e. TN is assigned to LST of 7
+   7.LST = 5.RST i.e.
+   7.LST = TN
+   7.RST = TC
+Here is the pictorial representation of Node 5 after insertion and before split
+                 [  5  ]
+                /       \
+              [3]       [7]
+             /   \     /   \
+            TA   TB   TN   TC
+
+Finally when NODE 5 is promoted into its parent ie NODE 9 BTree
+
+
+Original Tree:         __________[ 9 ]_________
+                      /______                  \
+                     [ 3 | 7 ]                  TD
+                    /    \   \
+                    TA   TB   TC 
+
+Intermediate:          __________[ 9 ]_________
+(5  NEW NODE)         /__________              \
+                     [_3_|_5_|_7_]              TD
+                    /    \   \   \
+                    TA   TB   TN  TC
+
+                         _____________
+Final Tree:             [__5___|___9__]
+                       /       \       \
+                     [3]       [7]      TD 
+                    /   \     /   \
+                    TA   TB   TN  TC
+
+_________________________________________________________
+                        STATE TABLE
+        CASE 1. Extreme Left  Insertion - STATE TAB
+_________________________________________________________
+BEFORE INSERTION             |  AFTER INSERTION
+_________________________________________________________
+                 [ PARENT TO CHILD FLOW ]
+1) 9.LST = [ 3 | 5 | 7 ]     | 9.LST = NULL       CHANGED
+2) 9.RST = T4                | 9.RST = T4         SAME
+3) 3.LST = TA                | 3.LST = TA         SAME
+4) 3.RST = TB                | 3.RST = TB         SAME
+5) 7.LST = NULL              | 7.LST = TN         CHANGED
+6) 7.RST = TC                | 7.RST = TC         SAME
+7) 5.LST = NULL (NEW NODE)   | 5.LST = [ 3 ]      CHANGED             
+8) 5.RST = TN   (NEW NODE)   | 5.RST = [ 7 ]      CHANGED             
+
+                 [ CHILD TO PARENT FLOW ]
+9)  TA.parent = 3            | TA.parent = 3      SAME
+10  TB.parent = 3            | TB.parent = 3      SAME
+11) TC.parent = 7            | TC.parent = 7      SAME
+12) TD.parent = 9            | TD.parent = 9      SAME
+13)  3.parent = 9            |  3.parent = 5      CHANGED
+14)  7.parent = 9            |  7.parent = 5      CHANGED
+15)  9.parent = NULL (ROOT)  |  9.parent = NULL   SAME
+16) TN.parent = 5 (NEW NODE) | TN.parent = 7      CHANGED
+_________________________________________________________
+
+=========================================================
+CASE 2. Extreme Right Insertion
+=========================================================
+Orignal Tree
+                         _____________
+                        [__5___|___9__]
+                       /       \       \ _________
+                     [3]       [7]      [_13_|_17_] 
+                    /   \     /   \    /     \     \
+                    TA   TB   TN   TD TX     TY     TZ
+
+5.LST and 5.RST are explained above
+
+9.RST = [ 13 | 17 ]
+
+Now 15 is getting inserted into 9.RST BTreeNode.
+Also assume that 15 is also having its RST TP
+15.LST = NULL
+15.RST = TP
+Here is the pictorial representation before split
+
+                         _____________
+                        [__5___|___9__]
+                       /       \       \ ______________
+                     [3]       [7]      [_13_|_15_|_17_] 
+                    /   \     /   \    /     \    \    \
+                    TA   TB   TN   TD TX     TY   TP    TZ
+
+Here is the tree representation of 15 NODE after insertion and before split
+                  ______
+                 [__15__]
+                /        \
+              [13]      [17]
+             /   \     /    \
+            TX   TY   TP   TZ
+
+Finally when NODE 15 is promoted into its parent ie NODE 9 BTree
+
+                         _____________
+Original:               [__5___|___9__]
+                       /       \       \ _________
+                     [3]       [7]      [_13_|_17_] 
+                    /   \     /   \    /     \     \
+                    TA   TB   TN   TD TX     TY     TZ
+
+                         _____________
+Intermediate:           [__5___|___9__]
+(15 NEW NODE)          /       \       \ ______________
+                     [3]       [7]      [_13_|_15_|_17_] 
+                    /   \     /   \    /     \    \    \
+                    TA   TB   TN   TD TX     TY   TP    TZ
+
+                         _________________________
+Final:                  [___5___|___9_ _|____15___]
+                       /       \        \         \
+                     [3]       [7]      [13]     [17] 
+                    /   \     /   \    /    \    /   \
+                    TA   TB   TN   TD TX     TY TP   TZ
+
+_________________________________________________________
+                        STATE TABLE
+               CASE 2. Extreme Right  Insertion
+_________________________________________________________
+BEFORE INSERTION             |  AFTER INSERTION
+_________________________________________________________
+1) 5.LST  = 3                | 5.LST  = 3 SAME 
+2) 5.RST  = 7                | 5.RST  = 7 SAME
+3) 9.RST  = [13 | 17]        | 9.RST  = [13]  i.e. CHANGED
+4) 13.LST = TX               | 13.LST = TX SAME
+5) 13.RST = TY               | 13.RST = TY SAME
+6) 17.LST = NULL             | 17.LST = TP   i.e. CHANGED
+7) 17.RST = TZ               | 17.RST = TZ SAME
+8) 15.LST = NULL (NEW NODE)  | 15.LST = NULL
+8) 15.RST = TP   (NEW NODE)  | 15.RST = [17] i.e. CHANGED
+_________________________________________________________
+
+
+=========================================================
+CASE 3. Intermediate  Insertion
+=========================================================
+LST stands for Left  SubTree
+RST stands for Right SubTree
+
+Here is the original tree
+                                _________________
+                       ________[_2_____|______9__]
+                      /            \              \
+                     TA            [ 3 | 7 ]      TB
+                                   /   \   \
+                                  TC   TD   TE
+
+2.LST = TA
+2.RST = [ 3 | 7 ]
+9.LST = NULL
+9.RST = TB
+3.LST = TC
+3.RST = TD
+
+When 5 is inserted then intermediate state before split
+5.LST = NULL
+5.RST = TN
+                                ____________________
+                           ____[_2_______|_______9__]
+                          /        \                 \
+                         TA        [ 3 | 5 | 7 ]      TB
+                                   /   \    \   \
+                                  TC   TD   TN   TE
+
+Here is the pictorial representation of Node 5 after insertion and before split
+                 [  5  ]
+                /       \
+              [3]       [7]       NOTE: Here 5.RST which was TN earlier now assigned to 7.LST
+             /   \     /   \          i.e. 7.LST = 5.RST = TN
+            TC   TD   TN   TE
+
+Finally when NODE 5 is promoted into its parent ie  between Key 2 and Key 9  BNode BTree
+
+                                _________________
+Original:                  ____[_2_____|______9__]
+                          /        \              \
+                         TA        [ 3 | 7 ]      TB
+                                   /   \   \
+                                  TC   TD   TE
+
+                                ____________________
+Intermediate:              ____[_2_______|_______9__]
+(5  NEW NODE)             /        \                 \
+                         TA        [ 3 | 5 | 7 ]      TB
+                                   /   \    \   \
+                                  TC   TD   TN   TE
+
+                                _________________
+Final:                     ____[_2_|_____5_|__9__]
+                          /        \       \      \
+                         TA        [3]      [7]    TB
+                                   /  \    /   \
+                                  TC  TD  TN   TE
+_________________________________________________________
+                        STATE TABLE
+               CASE 3. Intermediate Node Insertion
+_________________________________________________________
+BEFORE INSERTION             |  AFTER INSERTION
+_________________________________________________________
+1)  2.LST = TA               | 2.LST = TA         SAME
+2)  2.RST = [ 3 | 7 ]        | 5.RST = 3     i.e. CHANGED
+3)  9.LST = NULL             | 9.LST = NULL       SAME
+4)  9.RST = TB               | 9.RST = TB         SAME
+5)  3.LST = TC               | 3.LST = TC         SAME
+6)  3.RST = TD               | 3.RST = TD         SAME
+7)  7.LST = NULL             | 7.LST = TN    i.e. CHANGED  
+8)  7.RST = TE               | 7.RST = TE         SAME
+9)  5.LST = NULL (NEW NODE)  | 5.LST = NULL       SAME
+10) 5.RST = TN   (NEW NODE)  | 5.RST = 7     i.e. CHANGED
+_________________________________________________________
+
+
+
+
+
+
+
+     9
+  7     11
+
+
+       9
+ 3  7     11
+
+          9
+ 3  5  7     11
+
+      5    9
+    3   7     11
+
+      5    9
+ 2  3   7     11
+
+
+         5    9
+ 1  2  3   7     11
+
+    2    5    9
+ 1     3   7     11
+
+         5
+    2         9
+ 1     3   7     11
+
+
+
+Input
+1 2 3 
+
+          2
+      1       3
+
+          2
+      1       3  4
+
+ 
+          2
+      1       3  4  5
+
+          2     4
+      1      3     5
+
+
+          2     4
+      1      3     5    6
+
+          2     4
+      1      3     5    6    7
+
+
+          2     4      6
+       1     3     5       7
+
+                4
+          2            6
+       1     3     5       7
+
+
+
+

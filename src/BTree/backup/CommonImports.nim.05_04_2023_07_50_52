@@ -1,0 +1,21 @@
+import std/math
+#import std/os
+import strutils
+import std/streams
+import std/times
+
+#Functions imported from c language
+proc getchar*() 
+     {.importc: "getchar", header: "<stdio.h>".}
+
+proc printf*(formatstr: cstring) 
+     {.importc: "printf", varargs, header: "<stdio.h>".}
+
+proc log*(formatstr: cstring) 
+     {.importc: "printf", varargs,header: "<stdio.h>".}
+
+proc snprintf*(buf: cstring, cap: cint, frmt: cstring): cint 
+     {.importc: "snprintf", varargs, header: "<stdio.h>".}
+
+proc sprintf*(buf: cstring, frmt: cstring): cint 
+     {.importc: "sprintf", varargs, header: "<stdio.h>".}

@@ -1,0 +1,13 @@
+B Tree (b tree) (btree) notes
+
+It is a self balancing tree which can handle massive data
+It is better than AVL and Red Black trees
+Tree of order 'm' or degree 'm' means it will have 'm' leaves
+Each node will have more than one keys
+There are three entities and have restrictions
+1. Root : Has atleast two children
+2. Intermediate nodes: Can have at least ceil[m/2] children and 'm - 1' keys
+3. Leaves: All leaves have same level
+Its time complexity is O(logN) with base 2
+Invented in 1972 in Boeing Research Lab 
+

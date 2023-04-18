@@ -1,0 +1,53 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import CommonLogger
+import BTreeHeader
+import BTreeUtils
+import BTreePrints
+
+var inorderstr:string
+var inordercnt:int
+proc getInorder*(root: ref BTreeNode): void =
+#{
+  if (root == nil):
+    return
+    
+  var node: ref ListNode = root.bt_listhead
+  if (node == nil):
+    printf("node is null\n")
+
+  while true:
+    var left  = getLeft(node)
+    var right = getRight(node)
+
+    getInorder(left)
+    inorderstr.add("" & $node.key)
+    inorderstr.add(" ")
+    inordercnt = inordercnt + 1
+    getInorder(right)
+
+    node = node.next
+    if (node == nil):
+      break
+#}
+
+proc inorder*(root: ref BTreeNode): void =
+#{
+    inorderstr = ""
+    inordercnt = 0
+    echo ""
+    inorderstr.add("Inorder string  :[ ")
+    getInorder(root)
+    inorderstr.add("] Inorder Count : " & $inordercnt)
+    log(inorderstr)
+    logf(inorderstr)
+    echo ""
+#}

@@ -1,0 +1,517 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import CommonImports
+import CommonLogger
+import CommonUtils
+import BTreeHeader
+import BTreeUtils
+import BTreePrints
+import BTreeSearch
+import BTreeTraversal
+
+var inputdata: seq[int]
+var splitcnt = 0
+var debug = 0
+
+# Procs Forward Declaration
+proc adjustBTreeNode*(root: var ref BTreeNode): void
+
+proc breakBTreeNode(root: ref BTreeNode, 
+                    leftNode:   var ref ListNode,
+                    middleNode: var ref ListNode,
+                    rightNode:  var ref ListNode): void
+
+proc createBTree*(keys: seq[int]):ref BTreeNode
+
+proc createBTree*(order: int = BT_DEFAULT_ORDER,
+                  logfile: string = BT_DEFAULT_LOG_FILE,
+                  ): ref BTreeNode
+
+proc insertBTree*(key: int): int
+
+proc insertBTree*(root: var ref BTreeNode, key: int): int
+
+proc insertKey(root: var ref BTreeNode, key: int): int
+
+proc insertKeyNode(root: var ref BTreeNode,
+                 middle: var ref ListNode): void
+
+proc insertKeyNode(root: var ref BTreeNode,
+                 child: var ref BTreeNode): void
+
+proc split(leafBTreeNode: var ref BTreeNode): int
+proc splitForRoot(root: var ref BTreeNode): int
+proc splitLeaf(root: var ref BTreeNode): int
+
+proc adjustBTreeNode*(root: var ref BTreeNode): void =
+#{
+   var head = root.bt_listhead
+   var tail:ref ListNode = nil
+   root.bt_numkeys = 0 
+   root.bt_numchild = 0 
+
+   while(head != nil): #{
+     root.bt_numkeys = root.bt_numkeys + 1 
+
+     if (head.leftBTreeNode != nil):
+       root.bt_numchild = root.bt_numchild + 1 
+
+     if (head.rightBTreeNode != nil):
+       root.bt_numchild = root.bt_numchild + 1 
+
+     #[
+     var leftBTreeNode = getLeft(head)
+     if (leftBTreeNode != nil and tail != nil):
+       setRight(tail, leftBTreeNode)
+       setLeft(head, nil)
+     ]#
+
+     tail = head
+     head = head.next
+   #}  
+   root.bt_listtail = tail
+#}
+
+
+proc insertKey(root: var ref BTreeNode, key: int): int =
+#{
+   if (root == nil): #{
+      return BT_FAILURE
+   #}
+
+   var newnode  = newListNode(key)
+   if (newnode == nil):
+     return BT_FAILURE
+
+   var head    = root.bt_listhead
+   if (head == nil):
+     root.bt_listhead = newnode
+     root.bt_listtail = newnode
+     root.bt_numkeys  = root.bt_numkeys + 1 
+     return BT_SUCCESS
+
+   # Insert the key in extreme left
+   if (key < head.key): #{
+     newnode.next = head
+     head.prev = newnode
+     head      = newnode
+     root.bt_listhead = head
+     root.bt_numkeys  = root.bt_numkeys + 1
+     setParent(newnode, getParent(root))
+     setParentListNode(newnode, getParentListNode(head))
+     return BT_SUCCESS
+   #}
+
+   var tail    = root.bt_listtail
+   # Insert the key in extreme right
+   if (key > tail.key): #{
+     var pln = getParentListNode(tail)
+     tail.next = newnode
+     newnode.prev = tail
+     tail = newnode
+     root.bt_listtail = tail #TODO: Check if this statement is still required
+     root.bt_numkeys  = root.bt_numkeys + 1
+     setParent(newnode, getParent(root))
+     setParentListNode(newnode, pln)
+     return BT_SUCCESS
+   #} End of if loop
+
+   # Insert the key between head and tail
+   if (root.bt_numkeys == 2): #{
+     var head    = root.bt_listhead
+     var tail    = root.bt_listtail
+     newnode.next = tail
+     newnode.prev = head
+     tail.prev = newnode
+     head.next = newnode
+     root.bt_numkeys     = root.bt_numkeys + 1
+     setParent(newnode, getParent(root))
+     setParentListNode(newnode, getParentListNode(head))
+     return BT_SUCCESS
+   #} End of if loop
+
+   var prev = root.bt_listhead
+   head = root.bt_listhead.next
+
+   while (head != nil): #{
+     if (key < head.key): #{
+       prev.next = newnode
+       newnode.prev = prev
+       newnode.next = head
+       head.prev = newnode
+       setParent(newnode, getParent(root))
+       setParentListNode(newnode, getParentListNode(head))
+       return BT_SUCCESS
+     #} End of if loop
+     head = head.next
+   #} End of while loop
+#}
+
+proc breakBTreeNode(root: ref BTreeNode, 
+                    leftNode:   var ref ListNode,
+                    middleNode: var ref ListNode,
+                    rightNode:  var ref ListNode): void =
+#{
+    leftNode  = root.bt_listhead
+    var middle = getMiddle(leftNode)
+    rightNode = middle.next
+
+    middle.prev.next = nil
+    middle.next.prev = nil
+    middle.next = nil
+    middle.prev = nil
+    var right = getRight(middle)
+    setLeft(rightNode, right)
+    middleNode = middle
+
+    setParentListNode(middle, nil)
+    setParent(middle, nil)
+
+    var parent = getParent(root)
+    if (parent == nil):
+      return
+
+    #Remove the old link from parent to lefBTreeNode
+    var node = parent.bt_listhead
+    var child: ref BTreeNode
+
+    while(node != nil): #{
+      child = getLeft(node)
+      if (child == root):
+        setLeft(node, nil)
+      child = getRight(node)
+      if (child == root):
+        setRight(node, nil)
+
+      node = node.next
+    #}
+#}
+
+proc splitForRoot(root: var ref BTreeNode): int =
+#{
+   log("DEBUG:Inside splitForRoot\n")
+   var
+     ret    = BT_SUCCESS
+     leftListNode:   ref ListNode
+     middleListNode: ref ListNode
+     rightListNode:  ref ListNode
+
+   breakBTreeNode(root, leftListNode, middleListNode, rightListNode)
+
+   var newrootBTreeNode = newBTreeNode(middleListNode)
+   if (newrootBTreeNode == nil): #{
+     return BT_FAILURE
+   #}
+
+   var newrightBTreeNode = newBTreeNode(rightListNode)
+   if (newrightBTreeNode == nil): #{
+     return BT_FAILURE
+   #}
+
+   var newleftBTreeNode        = root
+
+   if (newrootBTreeNode.bt_listhead.rightBTreeNode != nil):
+     logf("WARNING: Need to handle this scenario\n")
+     logf("left %d, middle %d, right %d\n", 
+        leftListNode.key, middleListNode.key, rightListNode.key)
+     # Basically it is the case where the new root already has child
+     var rightChildBTreeNode = getRight(newrootBTreeNode)
+     setLeft(newrightBTreeNode, rightChildBTreeNode)
+     setParent(rightChildBTreeNode, newrightBTreeNode)
+     setParentAll(rightChildBTreeNode.bt_listhead, newrightBTreeNode)
+     setParentListNodeAll(rightChildBTreeNode, rightListNode)
+
+   setType(newrootBTreeNode,  BT_ROOT)
+   setType(newleftBTreeNode,  BT_LEAF)
+   setType(newrightBTreeNode, BT_LEAF)
+
+   #setParent(newleftBTreeNode, newrightBTreeNode, newrootBTreeNode)
+   #Set parents Left side
+   setLeftRight(middleListNode, newleftBTreeNode, newrightBTreeNode)
+   setParent(newleftBTreeNode, newrootBTreeNode)
+   setParentAll(leftListNode, newrootBTreeNode)
+   setParentListNodeAll(leftListNode, middleListNode)
+
+   #Set parents Right side
+   setParent(newrightBTreeNode, newrootBTreeNode)
+   setParentAll(rightListNode, newrootBTreeNode)
+   setParentListNodeAll(rightListNode, middleListNode)
+
+   setLeftRight(newrootBTreeNode, newleftBTreeNode, newrightBTreeNode)
+
+   adjustBTreeNode(newrootBTreeNode)
+   adjustBTreeNode(newleftBTreeNode)
+   adjustBTreeNode(newrightBTreeNode)
+
+   setRoot(newrootBTreeNode)
+   return BT_SUCCESS
+#} End of function splitForRoot
+
+proc insertKeyNode(root: var ref BTreeNode,
+                 middle: var ref ListNode): void =
+#{
+    var currkeynode = root.bt_listhead
+    var lastkeynode = root.bt_listtail
+    var prevkeynode: ref ListNode = nil
+
+    log("currkeynode.key %d, lastkeynode.key %d, middle.key %d\n",
+    currkeynode.key, lastkeynode.key, middle.key)
+
+    var leftChildBTreeNode  = getLeft(middle)
+    var rightChildBTreeNode = getRight(middle)
+    setLeft(middle, nil)
+    #setRight(middle, nil)
+    setParent(leftChildBTreeNode, root)
+    setParent(rightChildBTreeNode, root)
+    setParentAll(leftChildBTreeNode.bt_listhead, root)
+    setParentAll(rightChildBTreeNode.bt_listhead, root)
+
+    if (middle.key < currkeynode.key): #{
+      var left = getLeft(currkeynode)
+      if (left != nil):
+        log("ERROR: left BTreeNode pointer should have been NULL\n");
+        logf("ERROR: left BTreeNode pointer should have been NULL\n");
+
+      middle.next      = currkeynode
+      currkeynode.prev = middle
+      root.bt_listhead = middle
+
+      setParent(middle, getParent(root))
+      setParentListNode(middle, getParentListNode(currkeynode))
+
+      adjustBTreeNode(root)
+      return
+    #}
+
+    if (middle.key > lastkeynode.key): #{
+      var right = getRight(lastkeynode)
+      if (right != nil):
+        log("ERROR: right BTreeNode pointer should have been NULL\n");
+        log("currkeynode %d, middle.key %d, lastkeynode.key %d\n",
+            currkeynode.key, middle.key, lastkeynode.key);
+
+        logf("ERROR: right BTreeNode pointer should have been NULL\n");
+        logf("currkeynode %d, middle.key %d, lastkeynode.key %d\n",
+            currkeynode.key, middle.key, lastkeynode.key);
+
+      setRight(lastkeynode, leftChildBTreeNode)
+      setParentListNodeAll(leftChildBTreeNode, lastkeynode)
+
+      lastkeynode.next = middle
+      middle.prev      = lastkeynode
+      root.bt_listtail = middle
+
+      setParent(middle, getParent(root))
+      setParentListNode(middle, getParentListNode(lastkeynode))
+
+      adjustBTreeNode(root)
+      return
+    #}
+
+    if (root.bt_numkeys == 2): #{
+      var right = getRight(currkeynode)
+      if (right != nil):
+        log("WARNING: Proper Insertion is required\n")
+        logf("WARNING: Proper Insertion is required\n")
+        return
+
+      setRight(currkeynode, leftChildBTreeNode)
+      setParentListNodeAll(leftChildBTreeNode, currkeynode)
+
+      currkeynode.next = middle
+      middle.next      = lastkeynode
+      lastkeynode.prev = middle
+      middle.prev      = currkeynode
+
+      setParent(middle, getParent(root))
+      setParentListNode(middle, getParentListNode(currkeynode))
+
+      adjustBTreeNode(root)
+      return
+    #}
+      
+    while(currkeynode != nil): #{
+      if (middle.key < currkeynode.key):
+        var right = getRight(prevkeynode)
+        if (right != nil):
+          log("WARNING: We need to do insertion logically\n")
+          logf("WARNING: We need to do insertion logically\n")
+        
+        setRight(prevkeynode, leftChildBTreeNode)
+        setParentListNodeAll(leftChildBTreeNode, prevkeynode)
+
+        middle.next      = currkeynode
+        middle.prev      = prevkeynode
+        currkeynode.prev = middle
+        prevkeynode.next = middle
+        setParent(middle, getParent(root))
+        setParentListNode(middle, getParentListNode(prevkeynode))
+        adjustBTreeNode(root)
+        return
+      
+      prevkeynode = currkeynode
+      currkeynode = currkeynode.next
+    #}
+#} End of function insertKeyNode
+
+
+proc insertKeyNode(root: var ref BTreeNode, child: var ref BTreeNode): void =
+#{
+    insertKeyNode(root, child.bt_listhead)
+    return
+#}
+
+proc splitLeaf(root: var ref BTreeNode): int =
+#{
+   log("DEBUG:Inside splitLeaf\n")
+   var
+     ret    = BT_SUCCESS
+     leftListNode:   ref ListNode
+     middleListNode: ref ListNode
+     rightListNode:  ref ListNode
+     parent = getParent(root)
+    
+   breakBTreeNode(root, leftListNode, middleListNode, rightListNode)
+
+   var newrootBTreeNode = newBTreeNode(middleListNode)
+   if (newrootBTreeNode == nil): #{
+     return BT_FAILURE
+   #}
+
+   var newrightBTreeNode = newBTreeNode(rightListNode)
+   if (newrightBTreeNode == nil): #{
+     return BT_FAILURE
+   #}
+
+   var newleftBTreeNode  = root
+   #Note the below setting of left side of middle node will be removed
+   # once the middle node is inserted into the parent BTreeNode
+   setLeftRight(middleListNode, newleftBTreeNode, newrightBTreeNode)
+  
+   #Set Parent info of left list. Here instead of choosing the parent as middle list
+   # we choose to have the parent where the middle list will be inserted
+   # Note the setting of parentlistnode for left side will be removed
+   # once it the middle list will be inserted into parent
+   setParent(newleftBTreeNode, newrootBTreeNode)
+   setParentAll(leftListNode, newrootBTreeNode)
+   setParentListNodeAll(leftListNode, middleListNode)
+
+  
+   #Set Parent info of right list
+   setParent(newrightBTreeNode, newrootBTreeNode)
+   setParentAll(rightListNode, newrootBTreeNode)
+   setParentListNodeAll(rightListNode, middleListNode)
+
+   adjustBTreeNode(newleftBTreeNode)
+   adjustBTreeNode(newrightBTreeNode)
+   adjustBTreeNode(newrootBTreeNode)
+
+   log("DEBUG: BTreeNode %d is being promoted\n", newrootBTreeNode.bt_listhead.key)
+   inorderBTree(newrootBTreeNode)
+   insertKeyNode(parent, newrootBTreeNode) 
+
+   if (parent.bt_numkeys > BT_MAXKEYS):
+     var str = getBTreeNodeOnlyStr(parent)
+     log("AVERMA: %s\n", str)
+     ret = split(parent) 
+#} End of function splitLeaf
+
+proc split(leafBTreeNode: var ref BTreeNode): int =
+#{
+   if (getParent(leafBTreeNode) == nil): #{
+     return splitForRoot(leafBTreeNode)
+   else:
+     return splitLeaf(leafBTreeNode)
+
+   return BT_SUCCESS
+#}
+
+proc insertBTree*(root: var ref BTreeNode, key: int): int =
+#{
+   var ret:int = BT_SUCCESS
+   inputdata.add(key)
+
+   #if (key == 9):
+   if (key >= 2):
+     debug = 1
+
+   var targetLeafBTreeNode = findLeafBTreeNode(root, key)
+   if (targetLeafBTreeNode == nil):
+     return insertKey(root, key)
+   else:
+     var tkey = targetLeafBTreeNode.bt_listhead.key
+
+     var parent = getParent(targetLeafBTreeNode)
+     if (parent != nil):
+       var str = getBTreeNodeStr(parent)
+       #log("Target's Parent Keylist %s\n",str)
+
+     ret = insertKey(targetLeafBTreeNode, key)
+     if (targetLeafBTreeNode.bt_numkeys > BT_MAXKEYS): #{
+       ret = split(targetLeafBTreeNode)
+     #}
+
+   return ret
+#}
+
+proc insertBTree*(key: int): int =
+#{
+   var root = getRoot()
+   return insertBTree(root, key)
+#}
+
+proc createBTree*(keys: seq[int]):ref BTreeNode =
+#{
+   var root: ref BTreeNode
+
+   if (getRoot() == nil): #{
+     root = newBTreeNode()
+     if (root != nil):
+       setRoot(root)
+     else:
+       return nil
+   #}
+      
+   for key in keys: #{
+     var ret = insertBTree(root, key)
+     if (ret != BT_SUCCESS):
+       log("ERROR: Insertion failure for key [%d]\n", key)
+       return nil
+     root = getRoot()
+   #}
+
+   return root
+#}
+
+proc createBTree*(order: int = BT_DEFAULT_ORDER,
+                  logfile: string = BT_DEFAULT_LOG_FILE,
+                  ): ref BTreeNode =
+#{
+   BT_ORDER   = order
+   BT_DEGREE  = BT_ORDER
+   BT_DEGREE  = BT_ORDER
+   BT_MAXKEYS = BT_DEGREE - 1
+   BT_MAXCHLD = BT_DEGREE
+   #BT_MINCHLD = ceil(BT_DEGREE / 2)  
+
+   BT_LOG_FILE = logfile
+
+   #openLogger(BT_LOG_FILE)
+   var root: ref BTreeNode
+   if (getRoot() == nil): #{
+     root = newBTreeNode()
+     if (root != nil):
+       setRoot(root)
+     else:
+       return nil
+   #}
+   return root
+#}

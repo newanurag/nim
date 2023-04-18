@@ -1,0 +1,139 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import BTreeHeader
+
+proc insertKey(root: var ref BTreeNode, key: int): void =
+#{
+   if (root == nil): #{
+      root = newBTreeNode(key)
+      return
+   #}
+
+   var head    = root.bt_listhead
+
+   # Insert the key in extreme left
+   if (key < head.key): #{
+     var node  = newListNode(key)
+     node.next = head
+     head.prev = node
+     head      = node
+     root.bt_keylist  = head
+     root.bt_listhead = head
+     root.bt_knum     = root.bt_knum + 1
+     return
+   #}
+
+   var tail    = root.bt_listtail
+   # Insert the key in extreme right
+   if (key > tail.key): #{
+     var node = newListNode(key)
+     tail.next = node
+     node.prev = tail
+     tail = node
+     root.bt_listtail = tail #TODO: Check if this statement is still required
+     root.bt_knum     = root.bt_knum + 1
+     return
+   #}
+
+   # Insert the key between head and tail
+   if (root.bt_knum == 2): #{
+     var node = newListNode(key)
+     var head    = root.bt_listhead
+     var tail    = root.bt_listtail
+     node.next = tail
+     node.prev = head
+     tail.prev = node
+     head.next = node
+     root.bt_knum     = root.bt_knum + 1
+     return
+   #}
+
+   var prev = root.bt_listhead
+   head = root.bt_listhead.next
+
+   while (head != nil): #{
+     if (key < head.key): #{
+       var node = newListNode(key)
+       prev.next = node
+       node.prev = prev
+       node.next = head
+       head.prev = node
+       #break
+       return
+     #}
+     head = head.next
+   #}
+
+#}
+
+proc split(root: var ref BTreeNode, key: int): void =
+#{
+   var origroot = root
+   insertKey(root, key)
+   printf("BEFORE ");
+   printList(root)
+   var keylist = root.bt_keylist
+   var mid = getMiddle(keylist)
+   var left = root.bt_listhead
+   var right = mid.next
+   #Now mi is compleletely independent
+   mid.prev.next = nil
+   mid.prev      = nil
+   right.prev    = nil
+   mid.next      = nil
+
+   printf("left %d, mid %d, right %d\n", left.key, mid.key, right.key)
+
+   var newright = newBTreeNode(right)
+   var newroot = newBTreeNode(mid.key)
+   var newleft = root
+   newroot.bt_knum = 1
+   newroot.bt_cnum = 1
+
+   setLeft(newroot, newleft)
+   setRight(newroot, newright)
+   root = newroot
+   adjust(newroot)
+   adjust(newleft)
+   adjust(newright)
+
+   if (origroot.bt_parent == nil): #{
+     newleft.bt_parent = root
+     newright.bt_parent = root
+     root.bt_type = BT_ROOT
+     newleft.bt_type = BT_LEAF
+     newright.bt_type = BT_LEAF
+   #}
+#}
+
+proc createBTree*(root: var ref BTreeNode, parent: var ref BTreeNode, key: int):ref BTreeNode =
+#{
+   if (root == nil): #{
+     insertKey(root, key)
+     if (parent == nil): #{
+       root.bt_type = BT_ROOT
+     else:
+       root.bt_parent  = parent
+       parent.bt_cnum  = parent.bt_cnum + 1
+     return root
+   #}
+
+   if root.bt_knum < BT_MAXKEYS: #{
+     echo "Inserted ListNode [" & $key & "]"
+     # Insert the node here
+     insertKey(root, key)
+     return root
+   else:
+     echo "Key [" & $key & "] Ignored"
+     split(root, key)
+       
+   return root
+#}

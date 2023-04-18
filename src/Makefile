@@ -1,0 +1,2 @@
+bt:
+	(cd ../; make bt)

@@ -1,0 +1,30 @@
+import std/terminal
+import std/math
+import std/os
+import strutils
+import CommonImports
+import CommonLogger
+
+proc getch(): void =
+#{
+   getchar()
+#}
+
+proc btsleep*(x: int): void =
+#{
+   sleep(x)
+#}
+proc btsleeps*(x: int): void =
+#{
+   sleep(x * 1000)
+#}
+
+proc cls*(): void =
+#{
+   eraseScreen(stdout)
+#}
+
+proc clrscr*(): void =
+#{
+   cls()
+#}

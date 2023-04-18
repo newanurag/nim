@@ -1,0 +1,215 @@
+import std/math
+import std/os
+
+let BT_DEGREE  = 3                    #Degree of a BTree
+let BT_MAXKEYS = BT_DEGREE - 1         #Max no. of keys a btree node can handle
+let BT_MAXCHLD = BT_DEGREE            #Max no. of children. It should be BT_DEGREE
+let BT_MINCHLD = ceil(BT_DEGREE / 2)  #Min no. of childrens for a non-root and non-leaf node.
+                                      #It should be ceil[m/2] where m is the degree/order
+const BT_ROOT   = 1
+const BT_NODE   = 2
+const BT_LEAF   = 3
+
+type #{ A Linked List Node data structure
+  ListNode = object
+    key    : int
+    next   : ref ListNode
+    prev   : ref ListNode
+    lesser : pointer
+    greater: pointer
+#}
+
+type #{ A BTree Node data structure
+  BTreeNode = object
+    bt_type:     int 
+
+    # type of tree node
+    # 1 = root 
+    # 2 = Non-Leaf and Non-Root
+    # 3 = leaf
+
+    bt_knum:    int #No. of keys present in the current Btree node
+    bt_kstart:  int #first key present in keylist
+    bt_kend:    int #last key present in keylist
+    bt_listhead: ref ListNode #List of key nodes this node contains
+    bt_listtail: ref ListNode #tail node of the listhead
+    bt_cnum:    int #No. of children present in this node
+    
+#}
+
+proc newListNode(key: int): ref ListNode =
+#{
+   var obj     = new ListNode
+   obj.key     = key
+   obj.next    = nil
+   obj.prev    = nil
+   obj.lesser  = nil
+   obj.greater = nil
+   return obj
+#}
+
+proc newBTreeNode(key: int): ref BTreeNode =
+#{
+   var lnode         = newListNode(key)
+   var bnode         = new BTreeNode
+   bnode.bt_kstart   = key
+   bnode.bt_kend     = key
+   bnode.bt_listhead = lnode
+   bnode.bt_listtail = lnode
+   return bnode
+#}
+
+proc inorder(root: ref BTreeNode): void =
+#{
+  if (root == nil):
+    return
+    
+  var keylist: ref ListNode = root.bt_listhead
+  if (keylist == nil):
+    echo "keylist is null"
+  while true:
+    var left  = cast[ref BTreeNode](keylist.lesser)
+    var right = cast[ref BTreeNode](keylist.greater)
+
+    inorder(left)
+    stdout.write(keylist.key," ")
+    inorder(right)
+
+    keylist = keylist.next
+    if (keylist == nil):
+      break
+
+#}
+
+var btroot:ref BTreeNode = nil
+
+proc printList(head: ref ListNode): void =
+#{
+   var node = head
+   while (node != nil):
+     stdout.write(node.key," ")
+     node = node.next
+#}
+
+proc printBTreeNode(root: ref BTreeNode): void =
+#{
+   stdout.write("BTreeNode.kstart = " & $(root.bt_kstart) & "\n")
+   stdout.write("BTreeNode.kend   = " & $(root.bt_kend) & "\n")
+   stdout.write("BTreeNode.head   = " & $(root.bt_listhead.key) & "\n")
+   stdout.write("BTreeNode.tail   = " & $(root.bt_listtail.key) & "\n")
+   stdout.write("BTreeNode.cnum   = " & $(root.bt_cnum) & "\n")
+   stdout.write("BTreeNode.knum   = " & $(root.bt_knum) & "\n")
+
+#}
+
+proc insertList(head: var ref ListNode, tail: var ref ListNode, key: int): ref ListNode =
+#{
+   var found:bool = false
+   if (head == nil):
+     var obj = newListNode(key)
+     head = obj
+     tail = obj
+     return head
+   
+   if (key < head.key):
+     var obj = newListNode(key)
+     obj.next = head
+     return obj
+
+   if (key > tail.key): #{
+     var obj = newListNode(key)
+     tail.next = obj
+     tail = tail.next
+     return head
+   #}
+
+   var prev = head
+   var node = head.next
+   while(node.next != nil): #{
+     if (key < node.key): #{
+       var obj = newListNode(key)
+       obj.next = head
+       prev.next = obj
+       found = true
+       break
+     #}
+   #}
+
+     prev = node
+     node = node.next
+
+   if (found == false):
+     var obj = newListNode(key)
+     node.next = obj
+
+   return head
+#}
+
+proc create(root: var ref BTreeNode, key: int):ref BTreeNode =
+#{
+   if (root == nil):
+     var obj = newBTreeNode(key)
+     obj.bt_cnum = 1
+     obj.bt_knum = 1
+     echo "Created BTreeNode ["& $obj.bt_kstart & "]"
+     return obj
+
+   if (root.bt_cnum < BT_DEGREE):
+     echo "Inserted ListNode ["& $key & "]"
+     # Insert the node here
+     root.bt_listhead = insertList(root.bt_listhead, root.bt_listtail, key)
+     root.bt_kstart = root.bt_listhead.key
+     root.bt_kend   = root.bt_listtail.key
+     root.bt_cnum = root.bt_cnum + 1
+     root.bt_knum = root.bt_knum + 1
+   else:
+     if (key < root.bt_kstart): #{
+       echo "Time to create more BTreeNodes in left side of ", root.bt_listhead.key
+       var left: ref BTreeNode = cast[ref BTreeNode](root.bt_listhead.lesser)
+       left = create(left, key)
+       root.bt_listhead.lesser = cast[pointer](left)
+     #}
+     if (key > root.bt_kend): #{
+       echo "Time to create more BTreeNodes in right side of ",root.bt_listtail.key
+       var right: ref BTreeNode = cast[ref BTreeNode](root.bt_listtail.greater)
+       right = create(right, key)
+       root.bt_listtail.greater = cast[pointer](right)
+     #}
+
+   return root
+#}
+
+proc printInput(datalist: seq[int]): void=
+#{
+   for idx, i in datalist: #{
+     if (idx == low(datalist)):
+       stdout.write("Input string:[ ")
+
+     stdout.write(i)
+     stdout.write(" ")
+
+     if (idx == high(datalist)):
+       stdout.write("]\n")
+   #}
+
+#}
+
+proc main(): void =
+ 
+#{
+   var datalist = @[50,10,64,9, 70]
+
+   printInput(datalist)
+   for i in datalist: #{
+     btroot = create(btroot, i)
+   #}
+
+   #printList(btroot.bt_listhead)
+   echo "\nStarting inorder, Total no. of children ", btroot.bt_cnum
+   inorder(btroot)
+
+   echo ""
+   printInput(datalist)
+#}
+
+main()

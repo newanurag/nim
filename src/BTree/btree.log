@@ -1,0 +1,142 @@
+[13:38:20:2023-04-10] LOGGER STARTED for log file [logger.log]
+[13:38:20:2023-04-10] BTreeNode BTN[1] Created
+
+[13:38:20:2023-04-10] ListNode [1] Created for key [1]
+
+[13:38:20:2023-04-10] ListNode [2] Created for key [2]
+
+[13:38:20:2023-04-10] ListNode [3] Created for key [3]
+
+[13:38:20:2023-04-10] ListNode [4] Created for key [4]
+
+[13:38:20:2023-04-10] BTreeNode BTN[2] Created for key [4]
+
+[13:38:20:2023-04-10] BTreeNode BTN[3] Created for key [3]
+
+[13:38:31:2023-04-10] [<--------- BTreeNode Begin[1/3] ---------->
+[13:38:31:2023-04-10]  BTreeNode                     = 0x00007FD3D9794050
+[13:38:31:2023-04-10]  BTreeNode.ID                  = BTN[1]
+[13:38:31:2023-04-10]  BTreeNode.type                = LEAF
+[13:38:31:2023-04-10]  BTreeNode.level               = 0
+[13:38:31:2023-04-10]  BTreeNode.degree              = 4
+[13:38:31:2023-04-10]  BTreeNode.order               = 4
+[13:38:31:2023-04-10]  BTreeNode.head                = 1
+[13:38:31:2023-04-10]  BTreeNode.head                = 0x00007FD3D97940F0
+[13:38:31:2023-04-10]  BTreeNode.tail                = 2
+[13:38:31:2023-04-10]  BTreeNode.tail                = 0x00007FD3D9794140
+[13:38:31:2023-04-10]  BTreeNode.cnum(No. of childs) = 0
+[13:38:31:2023-04-10]  BTreeNode.maxchild            = 4
+[13:38:31:2023-04-10]  BTreeNode.knum(No. of keys)   = 2
+[13:38:31:2023-04-10]  BTreeNode.maxkeys             = 3
+[13:38:31:2023-04-10]  BTreeNode.middleKey           = 2
+[13:38:31:2023-04-10]  BTreeNode.middleNode          = 0x00007FD3D9794140
+[13:38:31:2023-04-10]  BTreeNode.parent              = 0x00007FD3D9794280
+[13:38:31:2023-04-10]  BTreeNode.parentBTreeNode     = [ 3 ]
+[13:38:31:2023-04-10]  BTreeNode.keyList             = [ 1 2 ]
+[13:38:31:2023-04-10] ]<--------- BTreeNode   End[1/3] ---------->
+[13:38:31:2023-04-10] [<--------- BTreeNode Begin[2/3] ---------->
+[13:38:31:2023-04-10]  BTreeNode                     = 0x00007FD3D9794230
+[13:38:31:2023-04-10]  BTreeNode.ID                  = BTN[2]
+[13:38:31:2023-04-10]  BTreeNode.type                = LEAF
+[13:38:31:2023-04-10]  BTreeNode.level               = 0
+[13:38:31:2023-04-10]  BTreeNode.degree              = 4
+[13:38:31:2023-04-10]  BTreeNode.order               = 4
+[13:38:31:2023-04-10]  BTreeNode.head                = 4
+[13:38:31:2023-04-10]  BTreeNode.head                = 0x00007FD3D97941E0
+[13:38:31:2023-04-10]  BTreeNode.tail                = 4
+[13:38:31:2023-04-10]  BTreeNode.tail                = 0x00007FD3D97941E0
+[13:38:31:2023-04-10]  BTreeNode.cnum(No. of childs) = 0
+[13:38:31:2023-04-10]  BTreeNode.maxchild            = 4
+[13:38:31:2023-04-10]  BTreeNode.knum(No. of keys)   = 1
+[13:38:31:2023-04-10]  BTreeNode.maxkeys             = 3
+[13:38:31:2023-04-10]  BTreeNode.middleKey           = 4
+[13:38:31:2023-04-10]  BTreeNode.middleNode          = 0x00007FD3D97941E0
+[13:38:31:2023-04-10]  BTreeNode.parent              = 0x00007FD3D9794280
+[13:38:31:2023-04-10]  BTreeNode.parentBTreeNode     = [ 3 ]
+[13:38:31:2023-04-10]  BTreeNode.keyList             = [ 4 ]
+[13:38:31:2023-04-10] ]<--------- BTreeNode   End[2/3] ---------->
+[13:38:31:2023-04-10] [<--------- BTreeNode Begin[3/3] ---------->
+[13:38:31:2023-04-10]  BTreeNode                     = 0x00007FD3D9794280
+[13:38:31:2023-04-10]  BTreeNode.ID                  = BTN[3]
+[13:38:31:2023-04-10]  BTreeNode.type                = ROOT
+[13:38:31:2023-04-10]  BTreeNode.level               = 1
+[13:38:31:2023-04-10]  BTreeNode.degree              = 4
+[13:38:31:2023-04-10]  BTreeNode.order               = 4
+[13:38:31:2023-04-10]  BTreeNode.head                = 3
+[13:38:31:2023-04-10]  BTreeNode.head                = 0x00007FD3D9794190
+[13:38:31:2023-04-10]  BTreeNode.tail                = 3
+[13:38:31:2023-04-10]  BTreeNode.tail                = 0x00007FD3D9794190
+[13:38:31:2023-04-10]  BTreeNode.cnum(No. of childs) = 2
+[13:38:31:2023-04-10]  BTreeNode.maxchild            = 4
+[13:38:31:2023-04-10]  BTreeNode.knum(No. of keys)   = 1
+[13:38:31:2023-04-10]  BTreeNode.maxkeys             = 3
+[13:38:31:2023-04-10]  BTreeNode.middleKey           = 3
+[13:38:31:2023-04-10]  BTreeNode.middleNode          = 0x00007FD3D9794190
+[13:38:31:2023-04-10]  BTreeNode.parent              = 0x0000000000000000
+[13:38:31:2023-04-10]  BTreeNode.keyList             = [ 3 ]
+[13:38:31:2023-04-10] ]<--------- BTreeNode   End[3/3] ---------->
+[13:38:31:2023-04-10] Total BTreeNodes     : 3
+
+[13:38:31:2023-04-10] [<--------- ListNode  Begin[1/4] ---------->
+[13:38:31:2023-04-10]  ListNode                      = 0x00007FD3D97940F0
+[13:38:31:2023-04-10]  ListNode.key                  = 1
+[13:38:31:2023-04-10]  ListNode.level                = 0
+[13:38:31:2023-04-10]  ListNode.currentBTreeNode     = 0x00007FD3D9794050
+[13:38:31:2023-04-10]  ListNode.currentBTreeNode     = [ 1 2 ] 
+[13:38:31:2023-04-10]  ListNode.ParentListNode       = 0x00007FD3D9794190
+[13:38:31:2023-04-10]  ListNode.ParentListNodeKey    = 3
+[13:38:31:2023-04-10]  ListNode.ParentBTreeNode      = 0x00007FD3D9794280
+[13:38:31:2023-04-10]  ListNode.ParentBTreeNode      = [ 3 ] 
+[13:38:31:2023-04-10]  ListNode.next                 = 0x00007FD3D9794140 next.key = 2
+[13:38:31:2023-04-10]  ListNode.prev                 = 0x0000000000000000
+[13:38:31:2023-04-10] [<--------- ListNode    End[1/4] ---------->
+[13:38:31:2023-04-10] [<--------- ListNode  Begin[2/4] ---------->
+[13:38:31:2023-04-10]  ListNode                      = 0x00007FD3D9794140
+[13:38:31:2023-04-10]  ListNode.key                  = 2
+[13:38:31:2023-04-10]  ListNode.level                = 0
+[13:38:31:2023-04-10]  ListNode.currentBTreeNode     = 0x00007FD3D9794050
+[13:38:31:2023-04-10]  ListNode.currentBTreeNode     = [ 1 2 ] 
+[13:38:31:2023-04-10]  ListNode.ParentListNode       = 0x00007FD3D9794190
+[13:38:31:2023-04-10]  ListNode.ParentListNodeKey    = 3
+[13:38:31:2023-04-10]  ListNode.ParentBTreeNode      = 0x00007FD3D9794280
+[13:38:31:2023-04-10]  ListNode.ParentBTreeNode      = [ 3 ] 
+[13:38:31:2023-04-10]  ListNode.next                 = 0x0000000000000000
+[13:38:31:2023-04-10]  ListNode.prev                 = 0x00007FD3D97940F0 prev.key = 1
+[13:38:31:2023-04-10] [<--------- ListNode    End[2/4] ---------->
+[13:38:31:2023-04-10] [<--------- ListNode  Begin[3/4] ---------->
+[13:38:31:2023-04-10]  ListNode                      = 0x00007FD3D9794190
+[13:38:31:2023-04-10]  ListNode.key                  = 3
+[13:38:31:2023-04-10]  ListNode.level                = 1
+[13:38:31:2023-04-10]  ListNode.currentBTreeNode     = 0x00007FD3D9794280
+[13:38:31:2023-04-10]  ListNode.currentBTreeNode     = [ 3 ] 
+[13:38:31:2023-04-10]  ListNode.ParentListNode       = 0x0000000000000000
+[13:38:31:2023-04-10]  ListNode.ParentListNodeKey    = NULL
+[13:38:31:2023-04-10]  ListNode.ParentBTreeNode      = 0x0000000000000000
+[13:38:31:2023-04-10]  ListNode.ParentBTreeNode      = NULL
+[13:38:31:2023-04-10]  ListNode.next                 = 0x0000000000000000
+[13:38:31:2023-04-10]  ListNode.prev                 = 0x0000000000000000
+[13:38:31:2023-04-10]  ListNode.leftBTreeNode        = [ 1 2 ]
+[13:38:31:2023-04-10]  ListNode.rightBTreeNode       = [ 4 ]
+[13:38:31:2023-04-10] [<--------- ListNode    End[3/4] ---------->
+[13:38:31:2023-04-10] [<--------- ListNode  Begin[4/4] ---------->
+[13:38:31:2023-04-10]  ListNode                      = 0x00007FD3D97941E0
+[13:38:31:2023-04-10]  ListNode.key                  = 4
+[13:38:31:2023-04-10]  ListNode.level                = 0
+[13:38:31:2023-04-10]  ListNode.currentBTreeNode     = 0x00007FD3D9794230
+[13:38:31:2023-04-10]  ListNode.currentBTreeNode     = [ 4 ] 
+[13:38:31:2023-04-10]  ListNode.ParentListNode       = 0x00007FD3D9794190
+[13:38:31:2023-04-10]  ListNode.ParentListNodeKey    = 3
+[13:38:31:2023-04-10]  ListNode.ParentBTreeNode      = 0x00007FD3D9794280
+[13:38:31:2023-04-10]  ListNode.ParentBTreeNode      = [ 3 ] 
+[13:38:31:2023-04-10]  ListNode.next                 = 0x0000000000000000
+[13:38:31:2023-04-10]  ListNode.prev                 = 0x0000000000000000
+[13:38:31:2023-04-10] [<--------- ListNode    End[4/4] ---------->
+[13:38:31:2023-04-10] Total ListNodes : 4
+
+[13:38:31:2023-04-10] 
+[13:38:31:2023-04-10] Inorder string  :[ 1 2 3 4 ] Inorder Count : 4
+[13:38:31:2023-04-10] Total BTreeNodes: 3
+
+[13:38:31:2023-04-10] Total ListNodes : 4
+
+[13:38:31:2023-04-10] LOGGER STOPPED for log file [logger.log]

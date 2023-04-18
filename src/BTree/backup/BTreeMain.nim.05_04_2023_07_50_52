@@ -1,0 +1,171 @@
+#################################################
+# BTreeMain.nim
+#################################################
+
+import os
+import CommonImports
+import CommonLogger
+import CommonUtils
+import BTreeHeader
+import BTreeUtils
+import BTreeTraversal
+import BTreeSearch
+import BTreeCreate
+import BTreePrints
+
+#################################################
+# Function   : main()
+# Description: Process life begins from here 
+#             
+#################################################
+var argv:seq[string]
+var argc:int
+
+var datalist: seq[int]
+var inputstr:string
+
+var header = "Input [ "
+var footer = "]"
+var prompt = "NIM_BTree > "
+
+proc processCommand(cmd: string): void =
+#{
+   if (cmd == "exit" or cmd == "quit" or cmd == "q" or cmd == "e" ):
+     log("Exiting...")
+     if (getRoot() != nil and getNumKeys() > 0 ):
+       printBTreeArrayF()
+       printBTreeListF()
+       printInputF(datalist)
+       inorderBTree(btroot)
+       logf("Total BTreeNodes: %d\n", getbsize())
+       logf("Total ListNodes : %d\n", len(btlist))
+     closeLogger()
+     echo ""
+     quit(0)
+     return
+
+   if (cmd == "date" or cmd == "ls" or cmd == "pwd"):
+     discard run(cmd)
+     return
+
+   if (cmd == "ex" or cmd == "eg"):
+     log("[50, 10, 64, 9, 70, 100, 120, 68, 130, 69, 15, 25, 30, 35, 40]\n")
+     return
+
+   if (cmd == "show" or cmd == "print" or cmd == "list" or cmd == "ll" or cmd == "s" or cmd == "stats"):
+     if (btroot == nil):
+       log("BTree is not formed yet. Enter any number to form a BTree\n")
+       return
+     printBTreeList()
+     return
+
+   if (cmd == "inorder" or cmd == "in"):
+     if (btroot == nil):
+       log("BTree is not formed yet. Enter any number to form a BTree\n")
+       return
+     log("Input   string  :[ " )
+     log(inputstr)
+     log(footer)
+     log(" Input   Count : %d", len(datalist))
+     echo ""
+     inorderBTree(btroot)
+     return
+
+   if (cmd == "clear" or cmd == "cl" or cmd == "c"):
+     btroot = nil
+     btarray.setLen(0)
+     btlist.setLen(0)
+     datalist.setLen(0)
+     inputstr = ""
+     cls()
+     return
+
+   if (cmd == "inp" or cmd == "input"):
+     log("Input   string  :[ " )
+     log(inputstr)
+     log(footer)
+     log(" Input   Count : %d", len(datalist))
+     echo ""
+     return
+
+   if (cmd == "root" or cmd == "r"):
+     if (btroot != nil):
+       var str = getBTreeNodeStr(btroot)
+       log("ROOT KeyList %s\n", str)
+     else:
+       log("BTree is not formed yet. Enter any number to form a BTree\n")
+     return
+
+   if (cmd == "child" or cmd == "ch"):
+     var str = getLeavesStr()
+     printBTreeArrayF()
+     printBTreeListF()
+     printInputF(datalist)
+     return
+
+   if (cmd == "flush" or cmd == "fl" ):
+     logflush()
+     return
+
+   var key = getint(cmd)
+   datalist.add(key)
+   inputstr.add($key & " ")
+   log(header)
+   log(inputstr)
+   log(footer)
+   echo ""
+
+   if (btroot != nil): 
+     var tn = findLeafBTreeNode(btroot, key)
+     if (tn != nil):
+       var str = getBTreeNodeStr(tn)
+       #log("Target KeyList %s\n", str)
+
+   discard insertBTree(key)
+   var str = getBTreeNodeStr(btroot)
+   #log("Root   KeyList %s\n", str)
+#}
+
+proc cliInput(): string =
+#{
+   cls()
+   log("Welcome of BTree Implementation in NIM Language\n")
+   var cmd:string
+   while (true):
+     log(prompt)
+     cmd = readLine(stdin);
+     if (cmd != ""):
+       processCommand(cmd)
+
+   return inputstr
+#}
+
+proc main(): void =
+#{
+   argv = os.commandLineParams()
+   argc = len(argv)
+   discard createBTree()
+   if (argc > 0 and argv[0] == "cli"):
+     var s = cliInput()
+     return
+   #Below one is a working datalist
+   #datalist = @[50, 10, 64, 9, 70, 100, 120, 68, 130, 69, 15, 25, 30, 35, 40]
+   datalist = @[1, 2, 3, 4]
+
+   printInput(datalist)
+   echo ""
+   for key in datalist: #{
+     discard insertBTree(key)
+   #}
+
+   printBTreeArrayF()
+   printBTreeListF()
+   printInputF(datalist)
+   inorderBTree(btroot)
+   log("Total BTreeNodes: %d\n", getbsize())
+   log("Total ListNodes : %d\n", len(btlist))
+#}
+
+openLogger(BT_LOG_FILE)
+main()
+closeLogger()

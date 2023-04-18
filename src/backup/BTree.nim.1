@@ -1,0 +1,311 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import BTreeHeader
+
+var btroot:ref BTreeNode = nil
+
+#################################################
+# Function   : inorder()
+# Description: Traverse the BTree in inorder mode
+#################################################
+proc getInorder*(root: ref BTreeNode): void =
+#{
+  if (root == nil):
+    return
+    
+  var keylist: ref ListNode = root.bt_listhead
+  if (keylist == nil):
+    echo "keylist is null"
+  while true:
+    var left  = cast[ref BTreeNode](keylist.lesser)
+    var right = cast[ref BTreeNode](keylist.greater)
+
+    getInorder(left)
+    stdout.write(keylist.key," ")
+    getInorder(right)
+
+    keylist = keylist.next
+    if (keylist == nil):
+      break
+#}
+
+proc inorder(root: ref BTreeNode): void =
+#{
+    stdout.write("Inorder string        :[ ")
+    getInorder(root)
+    stdout.write("]\n")
+#}
+
+#################################################
+# Function   : insertKey()
+# Description: To insert the key in the list
+#              in sorted order
+#################################################
+proc insertKey(head: var ref ListNode, tail: var ref ListNode, key: int): ref ListNode =
+#{
+   var found:bool = false
+   if (head == nil):
+     var obj = newListNode(key)
+     head = obj
+     tail = obj
+     return head
+   
+   # If the key is in extreme left
+   if (key < head.key): #{
+     var obj   = newListNode(key)
+     obj.next  = head
+     head.prev = obj
+     return obj
+   #}
+
+   # If the key is in extreme right
+   if (key > tail.key): #{
+     var obj   = newListNode(key)
+     obj.prev  = tail
+     tail.next = obj
+     tail = tail.next
+     return head
+   #}
+
+   # If the key is in between first and last node of the linked list
+   var prev = head
+   var node = head.next
+   while(node.next != nil): #{
+     if (key < node.key): #{
+       var obj = newListNode(key)
+       prev.next = obj
+       obj.prev = prev
+       obj.next = node
+       node.prev = obj
+       found = true
+       break
+     #}
+     prev = node
+     node = node.next
+   #}
+
+   if (found == false): #{
+     var obj = newListNode(key)
+     node.next = obj
+   #}
+
+   return head
+#}
+
+proc insertKey(root: var ref BTreeNode, key: int): void =
+#{
+   if (root == nil): #{
+      root = newBTreeNode(key)
+      return
+   #}
+
+   var head    = root.bt_listhead
+
+   # Insert the key in extreme left
+   if (key < head.key): #{
+     var node  = newListNode(key)
+     node.next = head
+     head.prev = node
+     head      = node
+     root.bt_keylist  = head
+     root.bt_listhead = head
+     root.bt_knum     = root.bt_knum + 1
+     return
+   #}
+
+   var tail    = root.bt_listtail
+   # Insert the key in extreme right
+   if (key > tail.key): #{
+     var node = newListNode(key)
+     tail.next = node
+     node.prev = tail
+     tail = node
+     root.bt_listtail = tail #TODO: Check if this statement is still required
+     root.bt_knum     = root.bt_knum + 1
+     return
+   #}
+
+   # Insert the key between head and tail
+   if (root.bt_knum == 2): #{
+     var node = newListNode(key)
+     var head    = root.bt_listhead
+     var tail    = root.bt_listtail
+     node.next = tail
+     node.prev = head
+     tail.prev = node
+     head.next = node
+     root.bt_knum     = root.bt_knum + 1
+     return
+   #}
+
+   var prev = root.bt_listhead
+   head = root.bt_listhead.next
+
+   while (head != nil): #{
+     if (key < head.key): #{
+       var node = newListNode(key)
+       prev.next = node
+       node.prev = prev
+       node.next = head
+       head.prev = node
+       break
+     #}
+     head = head.next
+   #}
+
+#}
+
+proc getMiddleNode(head: ref ListNode): ref ListNode =
+#{
+   var slow = head
+   var fast = head
+
+   while (fast != nil and fast.next != nil): #{
+     slow = slow.next
+     fast = fast.next.next
+   #}
+   return slow
+#}
+
+proc split(head: ref ListNode, left: var ref ListNode,
+            mid: var ref ListNode, right: var ref ListNode): void =
+#{
+   var middle = getMiddleNode(head)
+   left = head
+   right = middle.next
+   mid = middle
+   mid.prev.next = nil
+   mid.prev = nil
+   mid.next = nil
+   right.prev = nil
+   
+#}
+
+proc split(root: var ref BTreeNode, key: int): ref BTreeNode =
+#{
+   insertKey(root, key)
+#}
+
+proc getLeft(node: ref ListNode): ref BTreeNode =
+#{
+   var left = cast[ref BTreeNode](node.lesser)
+   return left
+#}
+
+proc getRight(node: ref ListNode): ref BTreeNode =
+#{
+   var right = cast[ref BTreeNode](node.greater)
+   return right
+#}
+
+proc setLeft(node: var ref ListNode, left: var ref BTreeNode): void =
+#{
+   var leftp = cast[ref BTreeNode](node.lesser)
+   leftp = left
+#}
+
+proc setLeft(root: var ref BTreeNode, left: ref BTreeNode): void =
+#{
+   var leftp = cast[ref BTreeNode](root.bt_listhead.lesser)
+   leftp = left
+#}
+
+proc setRight(node: var ref ListNode, right: var ref BTreeNode): void =
+#{
+   var rightp = cast[ref BTreeNode](node.greater)
+   rightp = right
+#}
+
+proc setRight(root: var ref BTreeNode, right: ref BTreeNode): void =
+#{
+   var rightp = cast[ref BTreeNode](root.bt_listtail.greater)
+   rightp = right
+#}
+
+
+
+#################################################
+# Function   : createBTree()
+# Description: To insert the key in the list
+#              in sorted order
+#################################################
+proc createBTree*(root: var ref BTreeNode, parent: var ref BTreeNode, key: int):ref BTreeNode =
+#{
+   if (root == nil): #{
+     root = newBTreeNode(key)
+     root.bt_knum = 1
+     if (parent == nil):
+       root.bt_type = BT_ROOT
+     else:
+       root.bt_parent  = parent
+       parent.bt_cnum  = parent.bt_cnum + 1
+       if (parent.bt_cnum > BT_MAXCHLD):
+         echo "Time to split the parent node [",parent.bt_kstart,"] for child key[",key,"]"
+       #stdout.write(str)
+     
+       if (parent != btroot): #{
+         parent.bt_type = BT_NODE
+       #}
+     #}
+
+     return root
+   #}
+
+   if root.bt_knum < BT_MAXKEYS: #{
+     echo "Inserted ListNode [" & $key & "]"
+     # Insert the node here
+     root.bt_listhead = insertKey(root.bt_listhead, root.bt_listtail, key)
+     root.bt_kstart   = root.bt_listhead.key
+     root.bt_kend     = root.bt_listtail.key
+     root.bt_knum     = root.bt_knum + 1
+     return root
+   else:
+     echo "Key [" & $key & "] Ignored"
+     var keylist = insertKey(root.bt_listhead, root.bt_listtail, key)
+     var middle: ref ListNode
+     var left: ref ListNode
+     var right: ref ListNode
+     split(keylist, left, middle, right)
+     printf("left %d, mid %d, right %d\n", left.key, middle.key, right.key)
+     if (root.bt_parent == nil): #{
+       var newbnode = newBTreeNode(middle.key)
+       setLeft(newbnode, root)
+     #}
+       
+   return root
+#}
+
+
+#################################################
+# Function   : main()
+# Description: Process life begins from here 
+#             
+#################################################
+proc main(): void =
+#{
+   #var datalist = @[50, 10, 64, 9, 70, 55, 12, 100, 42]
+   var datalist = @[50, 10, 64, 9, 70]
+
+   printInput(datalist)
+   for key in datalist: #{
+     var parent: ref BTreeNode = nil
+     #btroot = createBTree(btroot, parent, key)
+     insertKey(btroot, key)
+   #}
+
+   inorder(btroot)
+   printList(btroot)
+   printInput(datalist)
+   printBTreeNode(btroot)
+   printListAddress(btroot.bt_listhead)
+#}
+
+main()

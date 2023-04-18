@@ -1,0 +1,55 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import CommonLogger
+import BTreeHeader
+import BTreeUtils
+import BTreeTraversal
+import BTreeSearch
+import BTreeCreate
+import BTreePrints
+
+#################################################
+# Function   : main()
+# Description: Process life begins from here 
+#             
+#################################################
+proc main(): void =
+#{
+   #var datalist = @[50, 10, 64, 9, 70, 55, 12, 100, 42]
+   #var datalist = @[50, 10, 64, 9, 70, 100, 120, 130, 140, 150, 160, 12]
+   #Below one is a working datalist
+   var datalist = @[50, 10, 64, 9, 70, 100, 120, 68]
+   #var datalist = @[50, 10, 64, 9, 70, 100, 120, 68, 130]
+   logf("Welcome to BTree Log File "& BT_LOG_FILE)
+
+   printInput(datalist)
+   for key in datalist: #{
+     echo ""
+     var parent: ref BTreeNode = nil
+     discard createBTree(btroot, parent, key)
+     #getchar()
+     #insertKey(btroot, key)
+   #}
+
+   #printBTreeNode(btroot)
+   #printBTreeNode(getLeft(btroot))
+   #printBTreeNode(getRight(btroot))
+   printBTreeArrayF()
+   printBTreeListF()
+   #printListAddressF(btroot.bt_listhead)
+   printInput(datalist)
+   inorder(btroot)
+   log("Total BTreeNodes: %d\n", getbsize())
+#}
+
+openLogger(BT_LOG_FILE)
+main()
+closeLogger()

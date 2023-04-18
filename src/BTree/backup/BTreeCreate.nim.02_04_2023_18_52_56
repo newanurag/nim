@@ -1,0 +1,189 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import CommonLogger
+import CommonUtils
+import BTreeHeader
+import BTreeUtils
+import BTreePrints
+import BTreeSearch
+
+proc insertKey(root: var ref BTreeNode, key: int): void =
+#{
+   if (root == nil): #{
+      root = newBTreeNode(key)
+      return
+   #}
+   var newnode  = newListNode(key)
+   if (newnode == nil):
+     return
+
+   var head    = root.bt_listhead
+
+   # Insert the key in extreme left
+   if (key < head.key): #{
+     newnode.next = head
+     head.prev = newnode
+     head      = newnode
+     root.bt_listhead = head
+     root.bt_numkeys     = root.bt_numkeys + 1
+     return
+   #}
+
+   var tail    = root.bt_listtail
+   # Insert the key in extreme right
+   if (key > tail.key): #{
+     tail.next = newnode
+     newnode.prev = tail
+     tail = newnode
+     root.bt_listtail = tail #TODO: Check if this statement is still required
+     root.bt_numkeys     = root.bt_numkeys + 1
+     return
+   #}
+
+   # Insert the key between head and tail
+   if (root.bt_numkeys == 2): #{
+     var head    = root.bt_listhead
+     var tail    = root.bt_listtail
+     newnode.next = tail
+     newnode.prev = head
+     tail.prev = newnode
+     head.next = newnode
+     root.bt_numkeys     = root.bt_numkeys + 1
+     return
+   #}
+
+   var prev = root.bt_listhead
+   head = root.bt_listhead.next
+
+   while (head != nil): #{
+     if (key < head.key): #{
+       prev.next = newnode
+       newnode.prev = prev
+       newnode.next = head
+       head.prev = newnode
+       #break
+       return
+     #}
+     head = head.next
+   #}
+#}
+
+proc splitParent(parent: var ref BTreeNode,
+                 newleft: var ref BTreeNode,
+                 middle: var ref ListNode,
+                 newright: var ref BTreeNode): void =
+#{
+    var node = parent.bt_listtail
+    setRight(node, newleft)
+    node.next = middle
+    middle.prev = node
+    setRight(middle, newright)
+    adjustBTreeNode(parent)
+    adjustBTreeNode(newleft)
+    adjustBTreeNode(newright)
+    newright.bt_parent = parent
+    newleft.bt_parent = parent
+#}
+
+proc split(root: var ref BTreeNode, key: int): void =
+#{
+   var origroot = root
+   insertKey(root, key)
+   if (origroot.bt_parent != nil):
+     printf("Parent key : %d\n", origroot.bt_parent.bt_listhead.key)
+   printf("BEFORE ");
+   printList(root)
+   var keylist = root.bt_listhead
+   var middle = getMiddle(keylist)
+   var left = root.bt_listhead
+   var right = middle.next
+   #Now mi is compleletely independent
+   middle.prev.next = nil
+   middle.prev      = nil
+   right.prev       = nil
+   middle.next      = nil
+
+   printf("left %d, middle %d, right %d\n", left.key, middle.key, right.key)
+
+   if (origroot.bt_parent == nil): #{
+     #var newroot  = newBTreeNode(middle.key)
+     var newroot  = newBTreeNode(middle)
+     var newright = newBTreeNode(right)
+     var newleft  = root
+     newroot.bt_numkeys = 1
+     newroot.bt_cnum    = 1
+     setLeft(newroot, newleft)
+     setRight(newroot, newright)
+     btroot = newroot
+     adjustBTreeNode(newroot)
+     adjustBTreeNode(newleft)
+     adjustBTreeNode(newright)
+     newleft.bt_parent = newroot
+     newright.bt_parent = newroot
+     btroot.bt_type = BT_ROOT
+     newleft.bt_type = BT_LEAF
+     newright.bt_type = BT_LEAF
+   #}
+   else: #{
+     var parent = origroot.bt_parent
+     if (parent.bt_numkeys < BT_MAXKEYS): #{
+       log("Insert the key %d into parent %d\n", key, parent.bt_listhead.key)
+       var newright = newBTreeNode(right)
+       var newleft = root
+       splitParent(parent, newleft, middle, newright) 
+     #}
+     else:
+       log("[PARENT PRESENT]Coming here for key %d Parent numkeys %d \n", key, parent.bt_numkeys)
+       log("Parent key %d\n", parent.bt_listhead.key)
+       log("Not Yet Implemented\n")
+   #}
+#}
+
+proc createBTree*(root: var ref BTreeNode, parent: var ref BTreeNode, key: int):ref BTreeNode =
+#{
+   var targetbnode = findLeaf(root, key)
+   if (targetbnode == nil):
+     insertKey(root, key)
+     root.bt_type = BT_ROOT
+     return root
+   else:
+     var tkey = targetbnode.bt_listhead.key
+     if (targetbnode.bt_numkeys < BT_MAXKEYS): #{
+       log("key[%d] is inserted into target bnode %d \n", key, targetbnode.bt_listhead.key, targetbnode.bt_id)
+       if (targetbnode.bt_parent != nil):
+         log("parent id %d\n", targetbnode.bt_parent.bt_listhead.key)
+       insertKey(targetbnode, key)
+     else:
+       log("Key[%d] is targeted to bnode %d has %d keys\n",key, tkey , targetbnode.bt_numkeys)
+       split(targetbnode, key)
+       #root = targetbnode
+     #}
+
+   return root
+#}
+
+proc createBTree*(keys: seq[int]):ref BTreeNode =
+#{
+   if (btroot != nil):
+     log("Error: BTree is already created with root\n")
+     return nil
+
+   if (len(keys) != 3):
+     log("Error: Please provide 3 keys to create a BTree\n")
+     return nil
+
+   for idx, key in keys:
+     insertKey(btroot, key)
+     if (idx == 0):
+       btroot.bt_type = BT_ROOT
+
+   return btroot
+#}

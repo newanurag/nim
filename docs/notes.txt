@@ -1,0 +1,144 @@
+###########################################
+1) Variables
+###########################################
+int x;
+int y = 10;
+
+var x:int
+var y = 10
+
+###########################################
+2) To create a c type struct named Person
+###########################################
+
+# C language style
+
+typedef struct person_s {
+  char name[32];
+  int age;
+  char address[128];
+}Person;
+
+OR
+
+struct Person {
+  char name[32];
+  int age;
+  char address[128];
+};
+
+# NIM language style
+
+type
+  Person = object
+    name:    string 
+    age:     int
+    address: string
+
+#############################################################################################
+3) To create a struct/object with pointers to struct/object. 
+Here ref is used to denote traced references (pointers in c) 
+#############################################################################################
+
+# C language style
+
+typedef struct treenode_s {
+  int data;
+  struct treenode_s *left;
+  struct treenode_s *right
+}TreeNode;
+
+OR
+
+struct TreeNode {
+  int data;
+  struct TreeNode *left;
+  struct TreeNode *right
+};
+
+
+
+# NIM language style
+type
+  TreeNode = object
+  data:  int
+  left:  ref TreeNode
+  right: ref TreeNode
+
+To allocate a memory for reference objects in NIM
+var node = (ref TreeNode)()
+node.data = 5
+node.left = nil
+node.right = nil
+return node
+OR 
+var node = (ref TreeNode)(data: 5, left: nil, right: nil)
+return node
+OR
+return (ref TreeNode)(data: 5, left: nil, right: nil)
+OR
+var node:ref TreeNode
+new(node)
+node.data = 5
+node.left = nil
+node.right = nil
+return node
+
+
+###########################################
+4) Functions
+###########################################
+
+#C
+void abc(int x)
+
+#NIM
+proc abc(x: int): void =
+
+#C
+void def(int *x)
+
+#NIM
+proc def(x: ref int): void =
+
+
+###########################################
+5) NETWORKING / SOCKET PROGRAMMING
+###########################################
+
+Server Side
+===========
+proc newAsyncSocket(domain: Domain = AF_INET; sockType: SockType = SOCK_STREAM;
+                    protocol: Protocol = IPPROTO_TCP; buffered = true;
+                    inheritable = defined(nimInheritHandles)): owned(AsyncSocket) {.
+    ....}
+
+proc bindAddr(socket: AsyncSocket; port = Port(0); address = "") {.....}
+  If address is "" then ADDR_ANY will be bound.
+
+proc listen(socket: AsyncSocket; backlog = SOMAXCONN) {.....}
+proc accept(socket: AsyncSocket; flags = {SafeDisconn}): owned(Future[AsyncSocket]) {.....}
+proc close(socket: AsyncSocket) {.....}
+
+
+###########################################
+6) THREADS / THREADING / MULTITHREADING
+###########################################
+Threading is a part of system module package. Do not import it directly.
+To activate thread support, Need to compile the code with --threads:on command line switch.
+thread pragma should be used by the proc/function
+Threads can be created through two ways:
+ CreateThread
+ spawn
+
+Each thread has its own garbage collected heap and sharing of memory is restricted.
+The invoked proc/function must not use var parameters nor ref parameters or closure type
+
+###########################################
+7) ASYNC AWAIT
+###########################################
+It is for asynchronous IO.
+It includes:
+	async macro along with await keyword
+	dispatcher
+	Future type implementation

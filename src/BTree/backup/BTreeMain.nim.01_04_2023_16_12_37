@@ -1,0 +1,52 @@
+#################################################
+# IMPLEMENTATION OF BTREE IN NIM LANGUAGE
+#################################################
+#import std/math
+#import std/os
+
+#################################################
+# BTree and its associated data structures and
+# variables are defined in this header module
+#################################################
+import BTreeHeader
+import BTreeUtils
+import BTreeTraversal
+import BTreeSearch
+import BTreeCreate
+import BTreePrints
+
+#################################################
+# Function   : main()
+# Description: Process life begins from here 
+#             
+#################################################
+proc main(): void =
+#{
+   #var datalist = @[50, 10, 64, 9, 70, 55, 12, 100, 42]
+   var datalist = @[50, 10, 64, 9, 70, 100, 120, 130, 140, 150, 160, 12]
+   logf("Welcome to BTree Log File "& BT_LOG_FILE)
+
+   printInput(datalist)
+   for key in datalist: #{
+     var parent: ref BTreeNode = nil
+     btroot = createBTree(btroot, parent, key)
+     #insertKey(btroot, key)
+   #}
+
+   #printBTreeNode(btroot)
+   #printBTreeNode(getLeft(btroot))
+   #printBTreeNode(getRight(btroot))
+   printBTreeArrayF()
+   printListAddressF(btroot.bt_listhead)
+   printInput(datalist)
+   inorder(btroot)
+   var sr = search(btroot, 101)
+   if (sr == nil):
+     printf("SR is NULL\n")
+   else:
+     var lnode = sr.key
+     var bnode = sr.node
+     printf("key = %d\n", lnode.key);
+#}
+
+main()

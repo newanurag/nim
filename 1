@@ -15,19 +15,10 @@ rb:
 
 ll:
 	make -f $(LINKEDLIST_SRCDIR)/Makefile
-
-bst:
-	make -f $(BST_SRCDIR)/Makefile
-
-btree:
-	make -f $(BTREE_SRCDIR)/Makefile
 	
 
-all:rb ll bst btree
+all:rb
 
 
 clean:
 	make -f $(RB_SRCDIR)/Makefile clean
-	make -f $(LINKEDLIST_SRCDIR)/Makefile clean
-	make -f $(BST_SRCDIR)/Makefile clean
-	make -f $(BTREE_SRCDIR)/Makefile clean

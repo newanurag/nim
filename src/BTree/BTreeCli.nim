@@ -342,6 +342,11 @@ proc processCommand(cmd: string): int =
      discard insertBTree(key)
 #}
 
+proc rcliInput*(cmd: string): string =
+#{
+    discard processCommand(cmd)
+#}
+
 proc cliInput*(): string =
 #{
    cls()

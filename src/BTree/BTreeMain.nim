@@ -3,6 +3,7 @@
 #################################################
 
 import os
+import std/[asyncnet,asyncdispatch]
 import strutils
 import CommonImports
 import CommonLogger
@@ -15,6 +16,7 @@ import BTreeCreate
 import BTreePrints
 import BTreeCli
 import BTreeDelete
+import BTreeServer
 
 #################################################
 # Function   : main()
@@ -52,6 +54,11 @@ proc main(): void =
 
    if (argc > 0 and argv[0] == "cli"):
      var s = cliInput()
+     return
+
+   if (argc > 0 and argv[0] == "rcli"):
+     asyncCheck startBTreeServer(rcliInput)
+     runForever()
      return
    #Below one is a working datalist
    #datalist = @[50, 10, 64, 9, 70, 100, 120, 68, 130, 69, 15, 25, 30, 35, 40]

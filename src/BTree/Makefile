@@ -44,7 +44,10 @@ $(NIM_BINDIR)/BTreeDelete:$(BTREE_SRCDIR)BTreeDelete.nim $(NIM_BINDIR)/BTreeHead
 $(NIM_BINDIR)/BTreeCli:$(BTREE_SRCDIR)BTreeCli.nim $(NIM_BINDIR)/BTreeHead
 	nim  $(NIM_FLAGS) $(NIM_DEBUG_FLAGS) c -r $(BTREE_SRCDIR)BTreeCreate.nim
 
-$(NIM_BINDIR)/BTreeMain:$(BTREE_SRCDIR)BTreeMain.nim $(NIM_BINDIR)/BTreeDelete $(NIM_BINDIR)/BTreeCli $(NIM_BINDIR)/BTreeCreate $(NIM_BINDIR)/BTreeSearch $(NIM_BINDIR)/BTreeTraversal $(NIM_BINDIR)/BTreeUtils $(NIM_BINDIR)/BTreeHead
+$(NIM_BINDIR)/BTreeServer:$(BTREE_SRCDIR)BTreeCli.nim $(NIM_BINDIR)/BTreeHead
+	nim  $(NIM_FLAGS) $(NIM_DEBUG_FLAGS) c -r $(BTREE_SRCDIR)BTreeServer.nim
+
+$(NIM_BINDIR)/BTreeMain:$(BTREE_SRCDIR)BTreeMain.nim $(NIM_BINDIR)/BTreeServer $(NIM_BINDIR)/BTreeDelete $(NIM_BINDIR)/BTreeCli $(NIM_BINDIR)/BTreeCreate $(NIM_BINDIR)/BTreeSearch $(NIM_BINDIR)/BTreeTraversal $(NIM_BINDIR)/BTreeUtils $(NIM_BINDIR)/BTreeHead
 	nim  $(NIM_FLAGS) $(NIM_DEBUG_FLAGS) c $(BTREE_SRCDIR)BTreeMain.nim
 
 
@@ -55,6 +58,9 @@ cli:$(NIM_BINDIR)/BTreeMain
 	$(NIM_BINDIR)/BTreeMain cli
 
 rc:cli
+
+rcli:$(NIM_BINDIR)/BTreeMain
+	$(NIM_BINDIR)/BTreeMain rcli
 
 gcli:
 	gdb $(NIM_BINDIR)/BTreeMain cli

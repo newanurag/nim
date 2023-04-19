@@ -99,6 +99,9 @@ var btlist *:seq[ref ListNode]
 
 var btdebug *:int = BT_DEFAULT_DEBUG_LEVEL
 
+var BT_SERVER_PORT* = 9001
+var BT_SERVER_IP_ADDRESS* = "127.0.0.1"
+
 ########################################################
 #Function Declaration Prototype
 ########################################################
